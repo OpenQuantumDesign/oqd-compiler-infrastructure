@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "pytemplate"
+name = "oqd_compiler_infrastructure"
 version = "0.0.0"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = ["pydantic"]
 
 [project.optional-dependencies]
 docs = [
@@ -20,4 +20,4 @@ test = ["unittest_prettify"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["pytemplate"]
+include = ["oqd_compiler_infrastructure"]
