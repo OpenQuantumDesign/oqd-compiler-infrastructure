@@ -19,7 +19,15 @@ extra:
 
 nav:
   - Introduction: index.md
-  - API Reference: api_reference.md
+  - Explanation: explanation.md
+  - API Reference:
+      - Language:
+          - Interface: reference/interface.md
+      - Compiler:
+          - Base: reference/base.md
+          - Rule: reference/rule.md
+          - Walk: reference/walk.md
+          - Rewriter: reference/rewriter.md
 
 theme:
   name: material
