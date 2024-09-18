@@ -19,6 +19,7 @@ extra:
 
 nav:
   - Introduction: index.md
+  - API Reference: api_reference.md
 
 theme:
   name: material
@@ -43,12 +44,16 @@ theme:
     - search.suggest
     - search.highlight
     - content.tabs.link
-    - navigation.indexes
     - content.tooltips
-    - navigation.path
     - content.code.annotate
     - content.code.copy
     - content.code.select
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - navigation.prune
+    - toc.follow
 
 plugins:
   - mkdocstrings:
@@ -70,6 +75,7 @@ plugins:
             members_order: "source"
           import:
             - https://docs.python.org/3/objects.inv
+            - https://docs.pydantic.dev/latest/objects.inv
 
 markdown_extensions:
   - toc:
@@ -97,10 +103,15 @@ markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
 
+  - mdx_truly_sane_lists:
+      nested_indent: 2
+      truly_sane: True
+
 extra_javascript:
   - javascripts/mathjax.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 extra_css:
-  - stylesheets/extra_admonitions.css
+  - stylesheets/headers.css
+  - stylesheets/admonitions.css

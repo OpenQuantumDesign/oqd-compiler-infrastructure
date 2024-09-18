@@ -15,6 +15,7 @@ docs = [
     "mkdocstrings",
     "mkdocs-material",
     "mkdocstrings-python",
+    "mdx_truly_sane_lists",
 ]
 test = ["unittest_prettify"]
 
