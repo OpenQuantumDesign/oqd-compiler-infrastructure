@@ -20,4 +20,4 @@ test = ["unittest_prettify"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["oqd_compiler_infrastructure"]
+include = ["oqd_compiler_infrastructure*"]
