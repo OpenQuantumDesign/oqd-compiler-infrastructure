@@ -1,10 +1,24 @@
-site_name: Python Package
-site_description: Description
+site_name: OQD Compiler Infrastructure
+site_description: Open Quantum Design compiler infrastructure
+
+repo_name: OpenQuantumDesign/compiler_infrastructure
+repo_url: https://github.com/OpenQuantumDesign/compiler_infrastructure
+
+copyright: Copyright &copy; 2024 Open Quantum Design
+
+use_directory_urls: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/OpenQuantumDesign
+      name: Open Quantum Design GitHub
+    - icon: fontawesome/solid/globe
+      link: https://openquantumdesign.org
+      name: Open Quantum Design Website
 
 nav:
   - Introduction: index.md
-
-use_directory_urls: false
 
 theme:
   name: material
@@ -12,17 +26,17 @@ theme:
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: light-blue
-      accent: orange
+      primary: teal
+      accent: pink
       toggle:
-        icon: material/lightbulb
+        icon: material/weather-sunny
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: light-blue
-      accent: orange
+      primary: teal
+      accent: pink
       toggle:
-        icon: material/lightbulb-outline
+        icon: material/weather-night
         name: Switch to light mode
 
   features:
