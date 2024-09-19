@@ -16,6 +16,9 @@ docs = [
     "mkdocs-material",
     "mkdocstrings-python",
     "mdx_truly_sane_lists",
+    "jupyter",
+    "jupyter_contrib_nbextensions",
+    "mkdocs-jupyter",
 ]
 test = ["unittest_prettify"]
 
