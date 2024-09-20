@@ -16,9 +16,8 @@ class VisitableBaseModel(BaseModel):
     Class representing a visitable datastruct
     """
 
-    def accept(self, visitor):
-        visitor.reset()
-        return visitor.visit(self)
+    def accept(self, pass_):
+        return pass_(self)
 
     class Config:
         validate_assignment = True
