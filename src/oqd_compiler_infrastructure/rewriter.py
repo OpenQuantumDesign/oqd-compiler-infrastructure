@@ -3,7 +3,7 @@ from .base import PassBase
 ########################################################################################
 
 __all__ = [
-    "Rewriter",
+    "RewriterBase",
     "Chain",
     "FixedPoint",
 ]
@@ -11,7 +11,7 @@ __all__ = [
 ########################################################################################
 
 
-class Rewriter(PassBase):
+class RewriterBase(PassBase):
     """
     This class represents a wrapper for passes to compose and modify their logic without
     affecting the internals of a pass.
@@ -23,7 +23,7 @@ class Rewriter(PassBase):
 ########################################################################################
 
 
-class Chain(Rewriter):
+class Chain(RewriterBase):
     """
     This class represents a composite pass where the passes are applied sequentially.
     """
@@ -45,7 +45,7 @@ class Chain(Rewriter):
         return new_model
 
 
-class FixedPoint(Rewriter):
+class FixedPoint(RewriterBase):
     """
     This class represents a wrapped pass that is applied until the object/IR converges to a fixed point
     or reaches a maximum iteration count.

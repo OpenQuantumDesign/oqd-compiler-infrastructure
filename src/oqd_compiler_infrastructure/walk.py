@@ -4,7 +4,7 @@ from .rule import ConversionRule
 ########################################################################################
 
 __all__ = [
-    "Walk",
+    "WalkBase",
     "Pre",
     "Post",
     "Level",
@@ -14,7 +14,11 @@ __all__ = [
 ########################################################################################
 
 
-class Walk(PassBase):
+class WalkBase(PassBase):
+    """
+    This class represents a tree traversal algorithm to walk through an AST.
+    """
+
     def __init__(self, rule: PassBase, *, reverse: bool = False):
         super().__init__()
 
@@ -57,7 +61,7 @@ class Walk(PassBase):
 ########################################################################################
 
 
-class Pre(Walk):
+class Pre(WalkBase):
     """
     This class represents the pre order tree traversal algorithm that walks through an AST
     and applies the rule from top to bottom.
@@ -104,7 +108,7 @@ class Pre(Walk):
         return new_model
 
 
-class Post(Walk):
+class Post(WalkBase):
     """
     This class represents the post order tree traversal algorithm that walks through an AST
     and applies the rule from bottom to top.
@@ -164,7 +168,7 @@ class Post(Walk):
         return new_model
 
 
-class Level(Walk):
+class Level(WalkBase):
     """
     This class represents the level/breadth first order tree traversal algorithm that walks through an AST.
     """
@@ -239,7 +243,7 @@ class Level(Walk):
         return model
 
 
-class In(Walk):
+class In(WalkBase):
     """
     This class represents the in order tree traversal algorithm that walks through an AST.
     """

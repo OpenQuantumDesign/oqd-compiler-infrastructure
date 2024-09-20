@@ -3,6 +3,7 @@ from .base import PassBase
 ########################################################################################
 
 __all__ = [
+    "RuleBase",
     "RewriteRule",
     "ConversionRule",
     "PrettyPrint",
@@ -10,15 +11,23 @@ __all__ = [
 
 
 ########################################################################################
-class RewriteRule(PassBase):
+
+
+class RuleBase(PassBase):
     """
-    This class represents a rule used to rewrite a type or IR. The result of the same type
-    or IR.
+    This class represents a rule applied to an IR.
     """
 
     @property
     def children(self):
         return []
+
+
+class RewriteRule(RuleBase):
+    """
+    This class represents a rule used to rewrite a type or IR. The result of the same type
+    or IR.
+    """
 
     def map(self, model):
         for cls in model.__class__.__mro__:
@@ -37,7 +46,7 @@ class RewriteRule(PassBase):
     pass
 
 
-class ConversionRule(RewriteRule):
+class ConversionRule(RuleBase):
     """
     This class represents a rule used to convert between different types and IRs.
     """
