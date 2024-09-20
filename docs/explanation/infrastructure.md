@@ -21,6 +21,7 @@ This rewrite modified the AST as shown below. This Rule is an example of [`Pauli
     element3 --> element1 & element2
     element4("OperatorKron"):::OperatorKron
     element4 --> element0 & element3
+
     classDef Pauli stroke:#800000,stroke-width:3px
     classDef Ladder stroke:#700000,stroke-width:3px
     classDef OperatorAdd stroke:#3495BD,stroke-width:3px
@@ -52,68 +53,6 @@ This rewrite modified the AST as shown below. This Rule is an example of [`Pauli
 ///
 
 Note that `RewriteRule` does not traverse through the graph. To traverse a graph we use `Walk`.
-
-## Walk
-
-Walks are just the different ways of traversing graphs. Example for this case. We have several types of `Walk`. I will show the different types using the following the Tree.
-
-```mermaid
-    graph TD
-    element0("B0"):::OperatorMul
-    element1("C2"):::Pauli
-    element2("C3"):::Pauli
-    element3("B1"):::OperatorMul
-    element3 --> element1 & element2
-    element4("A0"):::OperatorKron
-    element4 --> element0 & element3
-    element5("C0"):::Pauli
-		element6("C1"):::Pauli
-    element0 --> element5 & element6
-    classDef Pauli stroke:#800000,stroke-width:3px
-    classDef Ladder stroke:#700000,stroke-width:3px
-    classDef OperatorAdd stroke:#3495BD,stroke-width:3px
-    classDef OperatorScalarMul stroke:#500000,stroke-width:3px
-    classDef OperatorKron stroke:#A452B3,stroke-width:3px
-    classDef OperatorMul stroke:300000,stroke-width:3px
-    classDef MathExpr stroke:#100000,stroke-width:3px
-
-```
-
-/// tab | Pre
-//// tab | Regular
-$$ A0\rightarrow B0 \rightarrow C0 \rightarrow C1 \rightarrow B1 \rightarrow C2 \rightarrow C3 $$
-////
-//// tab | Reverse
-$$ A0\rightarrow B1 \rightarrow C3 \rightarrow C2 \rightarrow B0 \rightarrow C1 \rightarrow C0 $$
-////
-///
-
-/// tab | Post
-//// tab | Regular
-$$ C0\rightarrow C1 \rightarrow B0 \rightarrow C2 \rightarrow C3 \rightarrow B1 \rightarrow A0 $$
-////
-//// tab | Reverse
-$$ C3\rightarrow C2 \rightarrow B1 \rightarrow C1 \rightarrow C0 \rightarrow B0 \rightarrow A0 $$
-////
-///
-
-/// tab | In
-//// tab | Regular
-$$ C0\rightarrow B0 \rightarrow C1 \rightarrow A0 \rightarrow C2 \rightarrow B1 \rightarrow C3 $$
-////
-//// tab | Reverse
-$$ C3\rightarrow B1 \rightarrow C2 \rightarrow A0 \rightarrow C1 \rightarrow B0 \rightarrow C0 $$
-////
-///
-
-/// tab | Level
-//// tab | Regular
-$$ A0\rightarrow B0 \rightarrow B1 \rightarrow C0 \rightarrow C1 \rightarrow C2 \rightarrow C3 $$
-////
-//// tab | Reverse
-$$ A0\rightarrow B1 \rightarrow B0 \rightarrow C3 \rightarrow C2 \rightarrow C1 \rightarrow C0 $$
-////
-///
 
 ## Conversion Rule
 
@@ -188,6 +127,68 @@ def map_IR1add(self, model: IR1add, operands):
 	return IR2add(op1 = operands['op1'], op2 = operands['op2'])
 
 ```
+
+## Walk
+
+Walks are just the different ways of traversing graphs. Example for this case. We have several types of `Walk`. I will show the different types using the following the Tree.
+
+```mermaid
+    graph TD
+    element0("B0"):::OperatorMul
+    element1("C2"):::Pauli
+    element2("C3"):::Pauli
+    element3("B1"):::OperatorMul
+    element3 --> element1 & element2
+    element4("A0"):::OperatorKron
+    element4 --> element0 & element3
+    element5("C0"):::Pauli
+		element6("C1"):::Pauli
+    element0 --> element5 & element6
+    classDef Pauli stroke:#800000,stroke-width:3px
+    classDef Ladder stroke:#700000,stroke-width:3px
+    classDef OperatorAdd stroke:#3495BD,stroke-width:3px
+    classDef OperatorScalarMul stroke:#500000,stroke-width:3px
+    classDef OperatorKron stroke:#A452B3,stroke-width:3px
+    classDef OperatorMul stroke:300000,stroke-width:3px
+    classDef MathExpr stroke:#100000,stroke-width:3px
+
+```
+
+/// tab | Pre
+//// tab | Regular
+$$ A0\rightarrow B0 \rightarrow C0 \rightarrow C1 \rightarrow B1 \rightarrow C2 \rightarrow C3 $$
+////
+//// tab | Reverse
+$$ A0\rightarrow B1 \rightarrow C3 \rightarrow C2 \rightarrow B0 \rightarrow C1 \rightarrow C0 $$
+////
+///
+
+/// tab | Post
+//// tab | Regular
+$$ C0\rightarrow C1 \rightarrow B0 \rightarrow C2 \rightarrow C3 \rightarrow B1 \rightarrow A0 $$
+////
+//// tab | Reverse
+$$ C3\rightarrow C2 \rightarrow B1 \rightarrow C1 \rightarrow C0 \rightarrow B0 \rightarrow A0 $$
+////
+///
+
+/// tab | In
+//// tab | Regular
+$$ C0\rightarrow B0 \rightarrow C1 \rightarrow A0 \rightarrow C2 \rightarrow B1 \rightarrow C3 $$
+////
+//// tab | Reverse
+$$ C3\rightarrow B1 \rightarrow C2 \rightarrow A0 \rightarrow C1 \rightarrow B0 \rightarrow C0 $$
+////
+///
+
+/// tab | Level
+//// tab | Regular
+$$ A0\rightarrow B0 \rightarrow B1 \rightarrow C0 \rightarrow C1 \rightarrow C2 \rightarrow C3 $$
+////
+//// tab | Reverse
+$$ A0\rightarrow B1 \rightarrow B0 \rightarrow C3 \rightarrow C2 \rightarrow C1 \rightarrow C0 $$
+////
+///
 
 ## Passes
 

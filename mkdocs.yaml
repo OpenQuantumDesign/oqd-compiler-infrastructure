@@ -19,7 +19,9 @@ extra:
 
 nav:
   - Introduction: index.md
-  - Explanation: explanation.md
+  - Explanation:
+      - Language: explanation/language.md
+      - Compiler Infrastructure: explanation/infrastructure.md
   - Tutorial: tutorial/tutorial.ipynb
   - API Reference:
       - Language:
