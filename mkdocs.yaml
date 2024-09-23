@@ -18,11 +18,15 @@ extra:
       name: Open Quantum Design Website
 
 nav:
-  - Introduction: index.md
+  - Get Started:
+      - Introduction: index.md
+      - Installation: get-started/installation.md
   - Explanation:
       - Language: explanation/language.md
       - Compiler Infrastructure: explanation/infrastructure.md
-  - Tutorial: tutorial/tutorial.ipynb
+      - Reference: explanation/reference.md
+  - Tutorial:
+      - Calculator: tutorial/calculator.ipynb
   - API Reference:
       - Language:
           - Interface: reference/interface.md
