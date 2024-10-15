@@ -164,3 +164,4 @@ cython_debug/
 *.sublime-*
 *.code-workspace
 .github/workflows/_*.yml
+_scripts
