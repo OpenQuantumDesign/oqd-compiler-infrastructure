@@ -27,9 +27,9 @@ The conversion rule handles the specific case where the AST nodes need to be tra
 Conversion requires that the AST is traversed in a topological order (children nodes converted before parent nodes) limiting the possible walks to only the [`Post`](#__tabbed_2_2) walk.
 ////
 
-/// html | div[style='float: right']
+//// html | div[style='float: right']
 [![](https://img.shields.io/badge/Implementation-7C4DFF)][oqd_compiler_infrastructure.rule.ConversionRule]
-///
+////
 ///
 
 ## Walk <div style="float: right;"> [![](https://img.shields.io/badge/Implementation-7C4DFF)][oqd_compiler_infrastructure.walk] </div>
