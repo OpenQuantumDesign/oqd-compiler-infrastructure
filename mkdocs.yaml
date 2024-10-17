@@ -1,8 +1,8 @@
-site_name: OQD Compiler Infrastructure
+site_name: "Open Quantum Design - Compiler Infrastructure"
 site_description: Open Quantum Design compiler infrastructure
 
-repo_name: OpenQuantumDesign/compiler_infrastructure
-repo_url: https://github.com/OpenQuantumDesign/compiler_infrastructure
+repo_name: OpenQuantumDesign/oqd-compiler-infrastructure
+repo_url: https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure
 
 copyright: Copyright &copy; 2024 Open Quantum Design
 
