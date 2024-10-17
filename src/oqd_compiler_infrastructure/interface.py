@@ -57,7 +57,6 @@ class TypeReflectBaseModel(VisitableBaseModel):
 
         return data
 
-
     # @classmethod
     # def get_subclasses(cls):
     #     # necessary for deserializing subclassed operators
