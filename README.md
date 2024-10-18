@@ -1,14 +1,24 @@
-# Open Quantum Design Compiler Infrastructure
+# ![Open Quantum Design](docs/img/oqd-logo-text.png)
+![Python](https://img.shields.io/badge/Python-3.11-blue)
 
-[![CI](https://github.com/OpenQuantumDesign/compiler_infrastructure/actions/workflows/CI.yml/badge.svg)](https://github.com/OpenQuantumDesign/compiler_infrastructure/actions/workflows/CI.yml)
-![Python](https://img.shields.io/badge/Python-3.10|3.11|3.12-blue)
+<h2 align="center">
+    Open Quantum Design: Compiler Infrastructure
+</h2>
+
+## What's here:
+This repository contains the base classes for various compilation and transpilation tasks with the OQD stack.
 
 ## Installation
 
-Install with pip:
 
+Install with pip:
 ```bash
-pip install git+https://github.com/OpenQuantumDesign/compiler_infrastructure
+pip install git+https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure.git
+```
+
+To install locally for development, 
+```bash
+git clone https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure.git
 ```
 
 ## Documentation
