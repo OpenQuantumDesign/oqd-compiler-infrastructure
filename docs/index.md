@@ -1,4 +1,3 @@
-# Open Quantum Design (OQD) Compiler Infrastructure
 # ![Open Quantum Design](./img/oqd-logo-text.png)
 
 <div align="center">
