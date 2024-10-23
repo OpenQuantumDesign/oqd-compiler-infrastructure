@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "oqd_compiler_infrastructure"
+name = "oqd-compiler-infrastructure"
 version = "0.0.0"
 requires-python = ">=3.8"
 dependencies = ["pydantic"]
