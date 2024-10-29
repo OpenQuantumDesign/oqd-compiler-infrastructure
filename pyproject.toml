@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "oqd_compiler_infrastructure"
 version = "0.0.0"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = ["pydantic"]
 
 [project.optional-dependencies]
@@ -16,9 +16,6 @@ docs = [
     "mkdocs-material",
     "mkdocstrings-python",
     "mdx_truly_sane_lists",
-    "jupyter",
-    "jupyter_contrib_nbextensions",
-    "mkdocs-jupyter",
 ]
 test = ["unittest_prettify"]
 

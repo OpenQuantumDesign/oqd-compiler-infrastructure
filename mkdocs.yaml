@@ -26,7 +26,7 @@ nav:
       - Compiler Infrastructure: explanation/infrastructure.md
       - Reference: explanation/reference.md
   - Tutorial: tutorial/calculator.ipynb
-#      - Calculator:
+  #      - Calculator:
   - API Reference:
       - Language:
           - Interface: reference/interface.md
@@ -96,8 +96,6 @@ plugins:
           import:
             - https://docs.python.org/3/objects.inv
             - https://docs.pydantic.dev/latest/objects.inv
-  - mkdocs-jupyter:
-      ignore_h1_titles: True
 
 markdown_extensions:
   - toc:
