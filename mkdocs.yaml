@@ -134,4 +134,4 @@ extra_javascript:
 
 extra_css:
   - stylesheets/headers.css
-  - stylesheets/admonitions.css
+  - stylesheets/extra_admonitions.css
