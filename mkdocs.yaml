@@ -24,7 +24,8 @@ nav:
   - Explanation:
       - Language: explanation/language.md
       - Compiler Infrastructure: explanation/infrastructure.md
-  - Tutorial: tutorial/calculator.ipynb
+  - Tutorial:
+      - Calculator: tutorial/calculator.md
   - API Reference:
       - Language:
           - Interface: reference/interface.md
