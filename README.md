@@ -20,7 +20,7 @@ Install with pip:
 pip install git+https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure.git
 ```
 
-To install locally for development,
+Clone the repo for local development:
 
 ```bash
 git clone https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure.git
