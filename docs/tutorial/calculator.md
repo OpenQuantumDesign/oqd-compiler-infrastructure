@@ -1,4 +1,4 @@
-In this tutorial we will implement a programming language for a rudimentary calculator.
+In this tutorial, we will implement a programming language for a rudimentary calculator.
 
 ## Language Definition
 
