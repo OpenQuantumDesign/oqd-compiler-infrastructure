@@ -31,6 +31,9 @@ __all__ = [
 class WalkBase(PassBase):
     """
     This class represents a tree traversal algorithm to walk through an AST.
+
+    Acknowledgement:
+        This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L167), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/walk.jl#L1)
     """
 
     def __init__(self, rule: PassBase, *, reverse: bool = False):
@@ -79,6 +82,9 @@ class Pre(WalkBase):
     """
     This class represents the pre order tree traversal algorithm that walks through an AST
     and applies the rule from top to bottom.
+
+    Acknowledgement:
+        This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L187), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/walk.jl#L3)
     """
 
     def walk_dict(self, model):
@@ -126,6 +132,9 @@ class Post(WalkBase):
     """
     This class represents the post order tree traversal algorithm that walks through an AST
     and applies the rule from bottom to top.
+
+    Acknowledgement:
+        This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L183), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/walk.jl#L9)
     """
 
     def walk_dict(self, model):

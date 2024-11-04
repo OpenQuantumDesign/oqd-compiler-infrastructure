@@ -29,6 +29,9 @@ class RewriterBase(PassBase):
     """
     This class represents a wrapper for passes to compose and modify their logic without
     affecting the internals of a pass.
+
+    Acknowledgement:
+        This code was inspired by [SynbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl), [Liang.jl](https://github.com/Roger-luo/Liang.jl/tree/main/src/rewrite).
     """
 
     pass
@@ -40,6 +43,9 @@ class RewriterBase(PassBase):
 class Chain(RewriterBase):
     """
     This class represents a composite pass where the passes are applied sequentially.
+
+    Acknowledgement:
+        This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L64C8-L64C13), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/chain.jl).
     """
 
     def __init__(self, *rules):
@@ -63,6 +69,9 @@ class FixedPoint(RewriterBase):
     """
     This class represents a wrapped pass that is applied until the object/IR converges to a fixed point
     or reaches a maximum iteration count.
+
+    Acknowledgement:
+        This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L117C8-L117C16), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/fixpoint.jl).
     """
 
     def __init__(self, rule, *, max_iter=1000):

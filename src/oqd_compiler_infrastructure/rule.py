@@ -41,6 +41,9 @@ class RewriteRule(RuleBase):
     """
     This class represents a rule used to rewrite a type or IR. The result of the same type
     or IR.
+
+    Acknowledgement:
+        This code was inspired by [MLIR](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/IR/PatternMatch.h#L246), [Bloqade-python](https://github.com/QuEraComputing/bloqade-python/blob/main/src/bloqade/ir/visitor.py#L34)
     """
 
     def map(self, model):
@@ -63,6 +66,9 @@ class RewriteRule(RuleBase):
 class ConversionRule(RuleBase):
     """
     This class represents a rule used to convert between different types and IRs.
+
+    Acknowledgement:
+        This code was inspired by [MLIR]()
     """
 
     def __init__(self):

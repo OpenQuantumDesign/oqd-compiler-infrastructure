@@ -21,6 +21,7 @@ nav:
   - Get Started:
       - Introduction: index.md
       - Installation: get-started/installation.md
+      - Acknowledgement: get-started/acknowledgement.md
   - Explanation:
       - Language: explanation/language.md
       - Compiler Infrastructure: explanation/infrastructure.md
