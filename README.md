@@ -1,28 +1,38 @@
-# ![Open Quantum Design](docs/img/oqd-logo-text.png)
-
-[![black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
-![versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
+# ![Open Quantum Design](https://raw.githubusercontent.com/OpenQuantumDesign/oqd-compiler-infrastructure/main/docs/img/oqd-logo-text.png)
 
 <h2 align="center">
     Open Quantum Design: Compiler Infrastructure
 </h2>
 
+[![doc](https://img.shields.io/badge/documentation-lightblue)](https://docs.openquantumdesign.org/open-quantum-design-compiler-infrastructure)
+[![PyPI Version](https://img.shields.io/pypi/v/oqd-compiler-infrastructure)](https://pypi.org/project/oqd-compiler-infrastructure)
+[![CI](https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure/actions/workflows/pytest.yml/badge.svg)](https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure/actions/workflows/pytest.yml)
+![versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
+[![black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0)
+
+
+
 ### What's here:
 This repository contains the supporting infrastructure, base classes, and abstractions 
 for creating custom compiler analysis, verification, and transformation passes.
 The modules in the repository are utilized for, e.g., lowering from the analog to atomic
-intermediate representations, and the atomic representation to base metal descriptions of
+intermediate representations, and the atomic representation to bare metal descriptions of
 quantum programs.
 
 ## Installation
 
-Install with pip:
+Install with `pip`:
+```bash
+pip install oqd-compiler-infrastructure
+```
 
+or alternatively from `git`:
 ```bash
 pip install git+https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure.git
 ```
 
-Clone the repository for local development:
+For development, clone the repository locally:
 
 ```bash
 git clone https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure.git
