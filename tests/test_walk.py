@@ -23,7 +23,15 @@ from unittest_prettify.colorize import (
 
 ########################################################################################
 
-from oqd_compiler_infrastructure import *
+from oqd_compiler_infrastructure import (
+    In,
+    Level,
+    Post,
+    Pre,
+    RewriteRule,
+    TypeReflectBaseModel,
+    VisitableBaseModel,
+)
 
 ########################################################################################
 
@@ -97,7 +105,10 @@ class TestPreWalk:
         printer = Pre(PrintWalkOrder())
 
         printer(inp)
-        assert printer.children[0].string == "\n0: ['a', ['b', 'c']]\n1: a\n2: ['b', 'c']\n3: b\n4: c"
+        assert (
+            printer.children[0].string
+            == "\n0: ['a', ['b', 'c']]\n1: a\n2: ['b', 'c']\n3: b\n4: c"
+        )
 
     def test_reversed_pre_list(self):
         "Test of reversed Pre Walk on a list"
@@ -133,7 +144,10 @@ class TestPreWalk:
         printer = Pre(PrintWalkOrder(), reverse=True)
 
         printer(inp)
-        assert printer.children[0].string == "\n0: ['a', ['b', 'c']]\n1: ['b', 'c']\n2: c\n3: b\n4: a"
+        assert (
+            printer.children[0].string
+            == "\n0: ['a', ['b', 'c']]\n1: ['b', 'c']\n2: c\n3: b\n4: a"
+        )
 
     def test_pre_TypeReflectBaseModel(self):
         "Test of Pre Walk on a TypeReflectBaseModel"
@@ -193,7 +207,10 @@ class TestPostWalk:
         printer = Post(PrintWalkOrder())
 
         printer(inp)
-        assert printer.children[0].string == "\n0: a\n1: b\n2: c\n3: ['b', 'c']\n4: ['a', ['b', 'c']]"
+        assert (
+            printer.children[0].string
+            == "\n0: a\n1: b\n2: c\n3: ['b', 'c']\n4: ['a', ['b', 'c']]"
+        )
 
     def test_reversed_post_list(self):
         "Test of reversed Post Walk on a list"
@@ -229,7 +246,10 @@ class TestPostWalk:
         printer = Post(PrintWalkOrder(), reverse=True)
 
         printer(inp)
-        assert printer.children[0].string == "\n0: c\n1: b\n2: ['b', 'c']\n3: a\n4: ['a', ['b', 'c']]"
+        assert (
+            printer.children[0].string
+            == "\n0: c\n1: b\n2: ['b', 'c']\n3: a\n4: ['a', ['b', 'c']]"
+        )
 
     def test_post_TypeReflectBaseModel(self):
         "Test of Post Walk on a TypeReflectBaseModel"
@@ -289,7 +309,10 @@ class TestLevelWalk:
         printer = Level(PrintWalkOrder())
 
         printer(inp)
-        assert printer.children[0].string == "\n0: [['a', ['b', 'c']], ['d', 'e']]\n1: ['a', ['b', 'c']]\n2: ['d', 'e']\n3: a\n4: ['b', 'c']\n5: d\n6: e\n7: b\n8: c"
+        assert (
+            printer.children[0].string
+            == "\n0: [['a', ['b', 'c']], ['d', 'e']]\n1: ['a', ['b', 'c']]\n2: ['d', 'e']\n3: a\n4: ['b', 'c']\n5: d\n6: e\n7: b\n8: c"
+        )
 
     def test_reversed_level_list(self):
         "Test of reversed Level Walk on a list"
@@ -325,7 +348,10 @@ class TestLevelWalk:
         printer = Level(PrintWalkOrder(), reverse=True)
 
         printer(inp)
-        assert printer.children[0].string == "\n0: [['a', ['b', 'c']], ['d', 'e']]\n1: ['d', 'e']\n2: ['a', ['b', 'c']]\n3: e\n4: d\n5: ['b', 'c']\n6: a\n7: c\n8: b"
+        assert (
+            printer.children[0].string
+            == "\n0: [['a', ['b', 'c']], ['d', 'e']]\n1: ['d', 'e']\n2: ['a', ['b', 'c']]\n3: e\n4: d\n5: ['b', 'c']\n6: a\n7: c\n8: b"
+        )
 
     def test_level_TypeReflectBaseModel(self):
         "Test of Level Walk on a TypeReflectBaseModel"
@@ -385,7 +411,10 @@ class TestInWalk:
         printer = In(PrintWalkOrder())
 
         printer(inp)
-        assert printer.children[0].string == "\n0: a\n1: ['a', ['b', 'c']]\n2: b\n3: ['b', 'c']\n4: c\n5: [['a', ['b', 'c']], ['d', 'e', 'f']]\n6: d\n7: e\n8: ['d', 'e', 'f']\n9: f"
+        assert (
+            printer.children[0].string
+            == "\n0: a\n1: ['a', ['b', 'c']]\n2: b\n3: ['b', 'c']\n4: c\n5: [['a', ['b', 'c']], ['d', 'e', 'f']]\n6: d\n7: e\n8: ['d', 'e', 'f']\n9: f"
+        )
 
     def test_reversed_in_list(self):
         "Test of reversed In Walk on a list"
@@ -421,7 +450,10 @@ class TestInWalk:
         printer = In(PrintWalkOrder(), reverse=True)
 
         printer(inp)
-        assert printer.children[0].string == "\n0: f\n1: e\n2: ['d', 'e', 'f']\n3: d\n4: [['a', ['b', 'c']], ['d', 'e', 'f']]\n5: c\n6: ['b', 'c']\n7: b\n8: ['a', ['b', 'c']]\n9: a"
+        assert (
+            printer.children[0].string
+            == "\n0: f\n1: e\n2: ['d', 'e', 'f']\n3: d\n4: [['a', ['b', 'c']], ['d', 'e', 'f']]\n5: c\n6: ['b', 'c']\n7: b\n8: ['a', ['b', 'c']]\n9: a"
+        )
 
     def test_in_TypeReflectBaseModel(self):
         "Test of In Walk on a TypeReflectBaseModel"
@@ -449,7 +481,10 @@ class TestInWalk:
         printer = In(PrintWalkOrder(), reverse=True)
 
         printer(inp)
-        assert printer.children[0].string == "\n0: x2\n1: a='x1' b='x2'\n2: x1\n3: n=N(class_='N') x=X(a='x1', b='x2')\n4: class_='N'"
+        assert (
+            printer.children[0].string
+            == "\n0: x2\n1: a='x1' b='x2'\n2: x1\n3: n=N(class_='N') x=X(a='x1', b='x2')\n4: class_='N'"
+        )
 
 
 @colorize(color=BLUE)
@@ -488,7 +523,10 @@ class TestLevelWalk:
         printer = Level(PrintWalkOrder())
 
         printer(inp)
-        assert printer.children[0].string == "\n0: [['a', ['b', 'c']], ['d', 'e']]\n1: ['a', ['b', 'c']]\n2: ['d', 'e']\n3: a\n4: ['b', 'c']\n5: d\n6: e\n7: b\n8: c"
+        assert (
+            printer.children[0].string
+            == "\n0: [['a', ['b', 'c']], ['d', 'e']]\n1: ['a', ['b', 'c']]\n2: ['d', 'e']\n3: a\n4: ['b', 'c']\n5: d\n6: e\n7: b\n8: c"
+        )
 
     def test_reversed_level_list(self):
         "Test of reversed Level Walk on a list"
@@ -524,7 +562,10 @@ class TestLevelWalk:
         printer = Level(PrintWalkOrder(), reverse=True)
 
         printer(inp)
-        assert printer.children[0].string == "\n0: [['a', ['b', 'c']], ['d', 'e']]\n1: ['d', 'e']\n2: ['a', ['b', 'c']]\n3: e\n4: d\n5: ['b', 'c']\n6: a\n7: c\n8: b"
+        assert (
+            printer.children[0].string
+            == "\n0: [['a', ['b', 'c']], ['d', 'e']]\n1: ['d', 'e']\n2: ['a', ['b', 'c']]\n3: e\n4: d\n5: ['b', 'c']\n6: a\n7: c\n8: b"
+        )
 
     def test_level_TypeReflectBaseModel(self):
         "Test of Level Walk on a TypeReflectBaseModel"
@@ -584,7 +625,10 @@ class TestInWalk:
         printer = In(PrintWalkOrder())
 
         printer(inp)
-        assert printer.children[0].string == "\n0: a\n1: ['a', ['b', 'c']]\n2: b\n3: ['b', 'c']\n4: c\n5: [['a', ['b', 'c']], ['d', 'e', 'f']]\n6: d\n7: e\n8: ['d', 'e', 'f']\n9: f"
+        assert (
+            printer.children[0].string
+            == "\n0: a\n1: ['a', ['b', 'c']]\n2: b\n3: ['b', 'c']\n4: c\n5: [['a', ['b', 'c']], ['d', 'e', 'f']]\n6: d\n7: e\n8: ['d', 'e', 'f']\n9: f"
+        )
 
     def test_reversed_in_list(self):
         "Test of reversed In Walk on a list"
@@ -620,7 +664,10 @@ class TestInWalk:
         printer = In(PrintWalkOrder(), reverse=True)
 
         printer(inp)
-        assert printer.children[0].string == "\n0: f\n1: e\n2: ['d', 'e', 'f']\n3: d\n4: [['a', ['b', 'c']], ['d', 'e', 'f']]\n5: c\n6: ['b', 'c']\n7: b\n8: ['a', ['b', 'c']]\n9: a"
+        assert (
+            printer.children[0].string
+            == "\n0: f\n1: e\n2: ['d', 'e', 'f']\n3: d\n4: [['a', ['b', 'c']], ['d', 'e', 'f']]\n5: c\n6: ['b', 'c']\n7: b\n8: ['a', ['b', 'c']]\n9: a"
+        )
 
     def test_in_TypeReflectBaseModel(self):
         "Test of In Walk on a TypeReflectBaseModel"
@@ -648,4 +695,7 @@ class TestInWalk:
         printer = In(PrintWalkOrder(), reverse=True)
 
         printer(inp)
-        assert printer.children[0].string == "\n0: x2\n1: a='x1' b='x2'\n2: x1\n3: n=N(class_='N') x=X(a='x1', b='x2')\n4: class_='N'"
+        assert (
+            printer.children[0].string
+            == "\n0: x2\n1: a='x1' b='x2'\n2: x1\n3: n=N(class_='N') x=X(a='x1', b='x2')\n4: class_='N'"
+        )
