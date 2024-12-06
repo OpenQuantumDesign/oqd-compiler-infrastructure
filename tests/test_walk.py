@@ -12,16 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
-from unittest_prettify.colorize import (
-    colorize,
-    GREEN,
-    RED,
-    BLUE,
-    MAGENTA,
-)
-
-########################################################################################
 
 from oqd_compiler_infrastructure import (
     In,
@@ -69,7 +59,6 @@ class A(VisitableBaseModel):
 ########################################################################################
 
 
-@colorize(color=GREEN)
 class TestPreWalk:
     def test_pre_list(self):
         "Test of Pre Walk on a list"
@@ -171,7 +160,6 @@ class TestPreWalk:
 ########################################################################################
 
 
-@colorize(color=RED)
 class TestPostWalk:
     def test_post_list(self):
         "Test of Post Walk on a list"
@@ -273,7 +261,6 @@ class TestPostWalk:
 ########################################################################################
 
 
-@colorize(color=BLUE)
 class TestLevelWalk:
     def test_level_list(self):
         "Test of Level Walk on a list"
@@ -375,7 +362,6 @@ class TestLevelWalk:
 ########################################################################################
 
 
-@colorize(color=MAGENTA)
 class TestInWalk:
     def test_in_list(self):
         "Test of In Walk on a list"
@@ -487,215 +473,114 @@ class TestInWalk:
         )
 
 
-@colorize(color=BLUE)
-class TestLevelWalk:
-    def test_level_list(self):
-        "Test of Level Walk on a list"
-        inp = ["a", "b"]
-
-        printer = Level(PrintWalkOrder())
-
-        printer(inp)
-        assert printer.children[0].string == "\n0: ['a', 'b']\n1: a\n2: b"
-
-    def test_level_dict(self):
-        "Test of Level Walk on a dict"
-        inp = {"a": "a", "b": "b"}
-
-        printer = Level(PrintWalkOrder())
-
-        printer(inp)
-        assert printer.children[0].string == "\n0: {'a': 'a', 'b': 'b'}\n1: a\n2: b"
-
-    def test_level_VisitableBaseModel(self):
-        "Test of Level Walk on a VisitableBaseModel"
-        inp = X(a="a", b="b")
-
-        printer = Level(PrintWalkOrder())
-
-        printer(inp)
-        assert printer.children[0].string == "\n0: a='a' b='b'\n1: a\n2: b"
-
-    def test_level_nested_list(self):
-        "Test of Level Walk on a nested list"
-        inp = [["a", ["b", "c"]], ["d", "e"]]
-
-        printer = Level(PrintWalkOrder())
-
-        printer(inp)
-        assert (
-            printer.children[0].string
-            == "\n0: [['a', ['b', 'c']], ['d', 'e']]\n1: ['a', ['b', 'c']]\n2: ['d', 'e']\n3: a\n4: ['b', 'c']\n5: d\n6: e\n7: b\n8: c"
-        )
-
-    def test_reversed_level_list(self):
-        "Test of reversed Level Walk on a list"
-        inp = ["a", "b"]
-
-        printer = Level(PrintWalkOrder(), reverse=True)
-
-        printer(inp)
-        assert printer.children[0].string == "\n0: ['a', 'b']\n1: b\n2: a"
-
-    def test_reversed_level_dict(self):
-        "Test of reversed Level Walk on a dict"
-        inp = {"a": "a", "b": "b"}
-
-        printer = Level(PrintWalkOrder(), reverse=True)
-
-        printer(inp)
-        assert printer.children[0].string == "\n0: {'a': 'a', 'b': 'b'}\n1: b\n2: a"
-
-    def test_reversed_level_VisitableBaseModel(self):
-        "Test of reversed Level Walk on a VisitableBaseModel"
-        inp = X(a="a", b="b")
-
-        printer = Level(PrintWalkOrder(), reverse=True)
-
-        printer(inp)
-        assert printer.children[0].string == "\n0: a='a' b='b'\n1: b\n2: a"
-
-    def test_reversed_level_nested_list(self):
-        "Test of reversed Level Walk on a nested list"
-        inp = [["a", ["b", "c"]], ["d", "e"]]
-
-        printer = Level(PrintWalkOrder(), reverse=True)
-
-        printer(inp)
-        assert (
-            printer.children[0].string
-            == "\n0: [['a', ['b', 'c']], ['d', 'e']]\n1: ['d', 'e']\n2: ['a', ['b', 'c']]\n3: e\n4: d\n5: ['b', 'c']\n6: a\n7: c\n8: b"
-        )
-
-    def test_level_TypeReflectBaseModel(self):
-        "Test of Level Walk on a TypeReflectBaseModel"
-        inp = Y(a="a", b="b")
-
-        printer = Level(PrintWalkOrder())
-
-        printer(inp)
-        assert printer.children[0].string == "\n0: class_='Y' a='a' b='b'\n1: a\n2: b"
-
-    def test_reversed_level_TypeReflectBaseModel(self):
-        "Test of reversed Level Walk on a TypeReflectBaseModel"
-        inp = Y(a="a", b="b")
-
-        printer = Level(PrintWalkOrder(), reverse=True)
-
-        printer(inp)
-        assert printer.children[0].string == "\n0: class_='Y' a='a' b='b'\n1: b\n2: a"
-
-
 ########################################################################################
 
 
-@colorize(color=MAGENTA)
-class TestInWalk:
-    def test_in_list(self):
-        "Test of In Walk on a list"
-        inp = ["a", "b"]
+def test_in_list():
+    "Test of In Walk on a list"
+    inp = ["a", "b"]
 
-        printer = In(PrintWalkOrder())
+    printer = In(PrintWalkOrder())
 
-        printer(inp)
-        assert printer.children[0].string == "\n0: a\n1: ['a', 'b']\n2: b"
+    printer(inp)
+    assert printer.children[0].string == "\n0: a\n1: ['a', 'b']\n2: b"
 
-    def test_in_dict(self):
-        "Test of In Walk on a dict"
-        inp = {"a": "a", "b": "b"}
+def test_in_dict():
+    "Test of In Walk on a dict"
+    inp = {"a": "a", "b": "b"}
 
-        printer = In(PrintWalkOrder())
+    printer = In(PrintWalkOrder())
 
-        printer(inp)
-        assert printer.children[0].string == "\n0: a\n1: {'a': 'a', 'b': 'b'}\n2: b"
+    printer(inp)
+    assert printer.children[0].string == "\n0: a\n1: {'a': 'a', 'b': 'b'}\n2: b"
 
-    def test_in_VisitableBaseModel(self):
-        "Test of In Walk on a VisitableBaseModel"
-        inp = X(a="a", b="b")
+def test_in_VisitableBaseModel():
+    "Test of In Walk on a VisitableBaseModel"
+    inp = X(a="a", b="b")
 
-        printer = In(PrintWalkOrder())
+    printer = In(PrintWalkOrder())
 
-        printer(inp)
-        assert printer.children[0].string == "\n0: a\n1: a='a' b='b'\n2: b"
+    printer(inp)
+    assert printer.children[0].string == "\n0: a\n1: a='a' b='b'\n2: b"
 
-    def test_in_nested_list(self):
-        "Test of In Walk on a nested list"
-        inp = [["a", ["b", "c"]], ["d", "e", "f"]]
+def test_in_nested_list():
+    "Test of In Walk on a nested list"
+    inp = [["a", ["b", "c"]], ["d", "e", "f"]]
 
-        printer = In(PrintWalkOrder())
+    printer = In(PrintWalkOrder())
 
-        printer(inp)
-        assert (
-            printer.children[0].string
-            == "\n0: a\n1: ['a', ['b', 'c']]\n2: b\n3: ['b', 'c']\n4: c\n5: [['a', ['b', 'c']], ['d', 'e', 'f']]\n6: d\n7: e\n8: ['d', 'e', 'f']\n9: f"
-        )
+    printer(inp)
+    assert (
+        printer.children[0].string
+        == "\n0: a\n1: ['a', ['b', 'c']]\n2: b\n3: ['b', 'c']\n4: c\n5: [['a', ['b', 'c']], ['d', 'e', 'f']]\n6: d\n7: e\n8: ['d', 'e', 'f']\n9: f"
+    )
 
-    def test_reversed_in_list(self):
-        "Test of reversed In Walk on a list"
-        inp = ["a", "b"]
+def test_reversed_in_list():
+    "Test of reversed In Walk on a list"
+    inp = ["a", "b"]
 
-        printer = In(PrintWalkOrder(), reverse=True)
+    printer = In(PrintWalkOrder(), reverse=True)
 
-        printer(inp)
-        assert printer.children[0].string == "\n0: b\n1: ['a', 'b']\n2: a"
+    printer(inp)
+    assert printer.children[0].string == "\n0: b\n1: ['a', 'b']\n2: a"
 
-    def test_reversed_in_dict(self):
-        "Test of reversed In Walk on a dict"
-        inp = {"a": "a", "b": "b"}
+def test_reversed_in_dict():
+    "Test of reversed In Walk on a dict"
+    inp = {"a": "a", "b": "b"}
 
-        printer = In(PrintWalkOrder(), reverse=True)
+    printer = In(PrintWalkOrder(), reverse=True)
 
-        printer(inp)
-        assert printer.children[0].string == "\n0: b\n1: {'a': 'a', 'b': 'b'}\n2: a"
+    printer(inp)
+    assert printer.children[0].string == "\n0: b\n1: {'a': 'a', 'b': 'b'}\n2: a"
 
-    def test_reversed_in_VisitableBaseModel(self):
-        "Test of reversed In Walk on a VisitableBaseModel"
-        inp = X(a="a", b="b")
+def test_reversed_in_VisitableBaseModel():
+    "Test of reversed In Walk on a VisitableBaseModel"
+    inp = X(a="a", b="b")
 
-        printer = In(PrintWalkOrder(), reverse=True)
+    printer = In(PrintWalkOrder(), reverse=True)
 
-        printer(inp)
-        assert printer.children[0].string == "\n0: b\n1: a='a' b='b'\n2: a"
+    printer(inp)
+    assert printer.children[0].string == "\n0: b\n1: a='a' b='b'\n2: a"
 
-    def test_reversed_in_nested_list(self):
-        "Test of reversed In Walk on a nested list"
-        inp = [["a", ["b", "c"]], ["d", "e", "f"]]
+def test_reversed_in_nested_list():
+    "Test of reversed In Walk on a nested list"
+    inp = [["a", ["b", "c"]], ["d", "e", "f"]]
 
-        printer = In(PrintWalkOrder(), reverse=True)
+    printer = In(PrintWalkOrder(), reverse=True)
 
-        printer(inp)
-        assert (
-            printer.children[0].string
-            == "\n0: f\n1: e\n2: ['d', 'e', 'f']\n3: d\n4: [['a', ['b', 'c']], ['d', 'e', 'f']]\n5: c\n6: ['b', 'c']\n7: b\n8: ['a', ['b', 'c']]\n9: a"
-        )
+    printer(inp)
+    assert (
+        printer.children[0].string
+        == "\n0: f\n1: e\n2: ['d', 'e', 'f']\n3: d\n4: [['a', ['b', 'c']], ['d', 'e', 'f']]\n5: c\n6: ['b', 'c']\n7: b\n8: ['a', ['b', 'c']]\n9: a"
+    )
 
-    def test_in_TypeReflectBaseModel(self):
-        "Test of In Walk on a TypeReflectBaseModel"
-        inp = Y(a="a", b="b")
+def test_in_TypeReflectBaseModel():
+    "Test of In Walk on a TypeReflectBaseModel"
+    inp = Y(a="a", b="b")
 
-        printer = In(PrintWalkOrder())
+    printer = In(PrintWalkOrder())
 
-        printer(inp)
-        assert printer.children[0].string == "\n0: a\n1: class_='Y' a='a' b='b'\n2: b"
+    printer(inp)
+    assert printer.children[0].string == "\n0: a\n1: class_='Y' a='a' b='b'\n2: b"
 
-    def test_reversed_in_TypeReflectBaseModel(self):
-        "Test of reversed In Walk on a TypeReflectBaseModel"
-        inp = Y(a="a", b="b")
+def test_reversed_in_TypeReflectBaseModel():
+    "Test of reversed In Walk on a TypeReflectBaseModel"
+    inp = Y(a="a", b="b")
 
-        printer = In(PrintWalkOrder(), reverse=True)
+    printer = In(PrintWalkOrder(), reverse=True)
 
-        printer(inp)
-        assert printer.children[0].string == "\n0: b\n1: class_='Y' a='a' b='b'\n2: a"
+    printer(inp)
+    assert printer.children[0].string == "\n0: b\n1: class_='Y' a='a' b='b'\n2: a"
 
-    def test_reversed_in_TypeReflectBaseModel_no_attribute(self):
-        "Test of reversed In Walk on a TypeReflectBaseModel with no attribute for N"
-        x = X(a="x1", b="x2")
-        n = N()
-        inp = A(n=n, x=x)
-        printer = In(PrintWalkOrder(), reverse=True)
+def test_reversed_in_TypeReflectBaseModel_no_attribute():
+    "Test of reversed In Walk on a TypeReflectBaseModel with no attribute for N"
+    x = X(a="x1", b="x2")
+    n = N()
+    inp = A(n=n, x=x)
+    printer = In(PrintWalkOrder(), reverse=True)
 
-        printer(inp)
-        assert (
-            printer.children[0].string
-            == "\n0: x2\n1: a='x1' b='x2'\n2: x1\n3: n=N(class_='N') x=X(a='x1', b='x2')\n4: class_='N'"
-        )
+    printer(inp)
+    assert (
+        printer.children[0].string
+        == "\n0: x2\n1: a='x1' b='x2'\n2: x1\n3: n=N(class_='N') x=X(a='x1', b='x2')\n4: class_='N'"
+    )
