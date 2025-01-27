@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from typing import Optional, Literal
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, ConfigDict
 
 ########################################################################################
 
@@ -30,11 +30,10 @@ class VisitableBaseModel(BaseModel):
     Class representing a visitable datastruct
     """
 
+    model_config = ConfigDict(validate_assignment=True)
+
     def accept(self, pass_):
         return pass_(self)
-
-    class Config:
-        validate_assignment = True
 
 
 class TypeReflectBaseModel(VisitableBaseModel):
