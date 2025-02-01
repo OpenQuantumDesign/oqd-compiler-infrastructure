@@ -28,7 +28,7 @@ classifiers = [
 
 
 dependencies = [
-  "pydantic>=2,<3",
+  "pydantic>=2, <3",
 ]
 
 [project.optional-dependencies]
@@ -39,15 +39,11 @@ docs = [
     "mkdocstrings-python",
     "mdx_truly_sane_lists",
 ]
+tests = ["pytest"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["oqd_compiler_infrastructure*"]
-
-[dependency-groups]
-dev = [
-    "pytest>=8.3.4",
-]
 
 
 [project.urls]
