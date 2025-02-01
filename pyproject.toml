@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "oqd-compiler-infrastructure"
-version = "0.1.0"
+version = "0.1.1"
 requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "Apache 2.0"}
@@ -27,7 +27,9 @@ classifiers = [
 ]
 
 
-dependencies = ["pydantic"]
+dependencies = [
+  "pydantic>=2,<3",
+]
 
 [project.optional-dependencies]
 docs = [
@@ -37,11 +39,15 @@ docs = [
     "mkdocstrings-python",
     "mdx_truly_sane_lists",
 ]
-test = ["unittest_prettify"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["oqd_compiler_infrastructure*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+]
 
 
 [project.urls]

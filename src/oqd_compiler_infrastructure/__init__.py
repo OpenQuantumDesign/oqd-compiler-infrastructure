@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .interface import VisitableBaseModel, TypeReflectBaseModel
 from .base import PassBase
-from .rule import RewriteRule, ConversionRule, PrettyPrint, RuleBase
-from .walk import Pre, Post, Level, In, WalkBase
+from .interface import TypeReflectBaseModel, VisitableBaseModel
 from .rewriter import Chain, FixedPoint, RewriterBase
+from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
+from .walk import In, Level, Post, Pre, WalkBase
 
 __all__ = [
     "VisitableBaseModel",
