@@ -27,7 +27,9 @@ classifiers = [
 ]
 
 
-dependencies = ["pydantic"]
+dependencies = [
+  "pydantic>=2, <3",
+]
 
 [project.optional-dependencies]
 docs = [
@@ -37,7 +39,7 @@ docs = [
     "mkdocstrings-python",
     "mdx_truly_sane_lists",
 ]
-test = ["unittest_prettify"]
+tests = ["pytest"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
