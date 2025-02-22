@@ -113,6 +113,7 @@ class RequiresPreWalk(RewriteRule):
     analysis_requirements = AnalysisRequirements(requirements=[(WalkOrder, Pre)])
 
 
+########################################################################################
 class MyEvaluate(ConversionRule):
     analysis_requirements = AnalysisRequirements(requirements=[CountTerms])
 
@@ -156,225 +157,221 @@ def model():
     return MyInt(x=1) + MyInt(x=2)
 
 
-def test_walk_shared_analysis_cache(model):
-    analysis_pass = Post(CountTerms())
-
-    analysis_pass(model)
-
-    verify_shared_analysis_cache(analysis_pass)
+########################################################################################
 
 
-def test_chain_shared_analysis_cache(model):
-    analysis_pass = Chain(Post(CountTerms()), Post(CountTerms()))
+class TestAnalysisCacheSharing:
+    def test_walk_shared_analysis_cache(self, model):
+        analysis_pass = Post(CountTerms())
 
-    analysis_pass(model)
+        analysis_pass(model)
 
-    verify_shared_analysis_cache(analysis_pass)
+        verify_shared_analysis_cache(analysis_pass)
 
+    def test_chain_shared_analysis_cache(self, model):
+        analysis_pass = Chain(Post(CountTerms()), Post(CountTerms()))
 
-def test_fixed_point_shared_analysis_cache(model):
-    analysis_pass = FixedPoint(Post(CountTerms()))
+        analysis_pass(model)
 
-    analysis_pass(model)
+        verify_shared_analysis_cache(analysis_pass)
 
-    verify_shared_analysis_cache(analysis_pass)
+    def test_fixed_point_shared_analysis_cache(self, model):
+        analysis_pass = FixedPoint(Post(CountTerms()))
+
+        analysis_pass(model)
+
+        verify_shared_analysis_cache(analysis_pass)
 
 
 ########################################################################################
 
 
-def test_simple_analysis_pass(model):
-    analysis_pass = Post(CountTerms())
+class TestAnalysisPass:
+    def test_simple_analysis_pass(self, model):
+        analysis_pass = Post(CountTerms())
 
-    analysis_pass(model)
+        analysis_pass(model)
 
-    assert analysis_pass.analysis_cache == AnalysisCache(
-        store=[AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2))]
-    )
+        assert analysis_pass.analysis_cache == AnalysisCache(
+            store=[AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2))]
+        )
 
+    def test_repeat_analysis_pass(self, model):
+        analysis_pass = Chain(Post(CountTerms()), Post(CountTerms()))
 
-def test_repeat_analysis_pass(model):
-    analysis_pass = Chain(Post(CountTerms()), Post(CountTerms()))
+        analysis_pass(model)
 
-    analysis_pass(model)
+        assert analysis_pass.analysis_cache == AnalysisCache(
+            store=[
+                AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
+                AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
+            ]
+        )
 
-    assert analysis_pass.analysis_cache == AnalysisCache(
-        store=[
-            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
-            AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
-        ]
-    )
+    def test_fixed_point_analysis_pass(self, model):
+        analysis_pass = FixedPoint(Post(CountTerms()))
 
+        analysis_pass(model)
 
-def test_fixed_point_analysis_pass(model):
-    analysis_pass = FixedPoint(Post(CountTerms()))
+        assert analysis_pass.analysis_cache == AnalysisCache(
+            store=[
+                AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
+            ]
+        )
 
-    analysis_pass(model)
+    def test_chain_analysis_pass(self, model):
+        analysis_pass = Chain(Post(CountTerms()), Post(CountAdds()))
 
-    assert analysis_pass.analysis_cache == AnalysisCache(
-        store=[
-            AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
-        ]
-    )
+        analysis_pass(model)
 
-
-def test_chain_analysis_pass(model):
-    analysis_pass = Chain(Post(CountTerms()), Post(CountAdds()))
-
-    analysis_pass(model)
-
-    assert analysis_pass.analysis_cache == AnalysisCache(
-        store=[
-            AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
-            AnalysisResult(name="CountAdds", valid=True, data=dict(N_terms=1)),
-        ]
-    )
+        assert analysis_pass.analysis_cache == AnalysisCache(
+            store=[
+                AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
+                AnalysisResult(name="CountAdds", valid=True, data=dict(N_terms=1)),
+            ]
+        )
 
 
 ########################################################################################
 
 
-def test_single_automated_analysis(model):
-    analysis_pass = Post(RequiresSingle())
+class TestBlankAutomatedAnalysis:
+    def test_single_automated_analysis(self, model):
+        analysis_pass = Post(RequiresSingle())
 
-    analysis_pass(model)
+        analysis_pass(model)
 
-    assert analysis_pass.analysis_cache == AnalysisCache(
-        store=[
-            AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
-        ]
-    )
+        assert analysis_pass.analysis_cache == AnalysisCache(
+            store=[
+                AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
+            ]
+        )
 
+    def test_multiple_automated_analysis(self, model):
+        analysis_pass = Post(RequiresMultiple())
 
-def test_multiple_automated_analysis(model):
-    analysis_pass = Post(RequiresMultiple())
+        analysis_pass(model)
 
-    analysis_pass(model)
+        assert analysis_pass.analysis_cache == AnalysisCache(
+            store=[
+                AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
+                AnalysisResult(name="CountAdds", valid=True, data=dict(N_terms=1)),
+            ]
+        )
 
-    assert analysis_pass.analysis_cache == AnalysisCache(
-        store=[
-            AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
-            AnalysisResult(name="CountAdds", valid=True, data=dict(N_terms=1)),
-        ]
-    )
+    def test_requires_post_walk_automated_analysis(self, model):
+        analysis_pass = Post(RequiresPostWalk())
 
+        analysis_pass(model)
 
-def test_requires_post_walk_automated_analysis(model):
-    analysis_pass = Post(RequiresPostWalk())
-
-    analysis_pass(model)
-
-    assert analysis_pass.analysis_cache == AnalysisCache(
-        store=[
-            AnalysisResult(
-                name="WalkOrder",
-                valid=True,
-                data=dict(
-                    walk_order=[
-                        (0, 1),
-                        (1, MyInt(class_="MyInt", x=1)),
-                        (2, 2),
-                        (3, MyInt(class_="MyInt", x=2)),
-                        (
-                            4,
-                            MyAdd(
-                                class_="MyAdd",
-                                left=MyInt(class_="MyInt", x=1),
-                                right=MyInt(class_="MyInt", x=2),
+        assert analysis_pass.analysis_cache == AnalysisCache(
+            store=[
+                AnalysisResult(
+                    name="WalkOrder",
+                    valid=True,
+                    data=dict(
+                        walk_order=[
+                            (0, 1),
+                            (1, MyInt(class_="MyInt", x=1)),
+                            (2, 2),
+                            (3, MyInt(class_="MyInt", x=2)),
+                            (
+                                4,
+                                MyAdd(
+                                    class_="MyAdd",
+                                    left=MyInt(class_="MyInt", x=1),
+                                    right=MyInt(class_="MyInt", x=2),
+                                ),
                             ),
-                        ),
-                    ],
-                    counter=5,
+                        ],
+                        counter=5,
+                    ),
                 ),
-            ),
-        ]
-    )
+            ]
+        )
 
+    def test_requires_pre_walk_automated_analysis(self, model):
+        analysis_pass = Post(RequiresPreWalk())
 
-def test_requires_pre_walk_automated_analysis(model):
-    analysis_pass = Post(RequiresPreWalk())
+        analysis_pass(model)
 
-    analysis_pass(model)
-
-    assert analysis_pass.analysis_cache == AnalysisCache(
-        store=[
-            AnalysisResult(
-                name="WalkOrder",
-                valid=True,
-                data=dict(
-                    walk_order=[
-                        (
-                            0,
-                            MyAdd(
-                                class_="MyAdd",
-                                left=MyInt(class_="MyInt", x=1),
-                                right=MyInt(class_="MyInt", x=2),
+        assert analysis_pass.analysis_cache == AnalysisCache(
+            store=[
+                AnalysisResult(
+                    name="WalkOrder",
+                    valid=True,
+                    data=dict(
+                        walk_order=[
+                            (
+                                0,
+                                MyAdd(
+                                    class_="MyAdd",
+                                    left=MyInt(class_="MyInt", x=1),
+                                    right=MyInt(class_="MyInt", x=2),
+                                ),
                             ),
-                        ),
-                        (1, MyInt(class_="MyInt", x=1)),
-                        (2, 1),
-                        (3, MyInt(class_="MyInt", x=2)),
-                        (4, 2),
-                    ],
-                    counter=5,
+                            (1, MyInt(class_="MyInt", x=1)),
+                            (2, 1),
+                            (3, MyInt(class_="MyInt", x=2)),
+                            (4, 2),
+                        ],
+                        counter=5,
+                    ),
                 ),
-            ),
-        ]
-    )
+            ]
+        )
 
 
 ########################################################################################
 
 
-def test_simplify_automated_analysis(model):
-    simplify_pass = Post(MySimplify())
+class TestAutomatedAnalysis:
+    def test_simplify_automated_analysis(self, model):
+        simplify_pass = Post(MySimplify())
 
-    new_model = simplify_pass(model)
+        new_model = simplify_pass(model)
 
-    assert new_model == MyInt(x=3)
-    assert simplify_pass.analysis_cache == AnalysisCache(
-        store=[
-            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
-        ]
-    )
+        assert new_model == MyInt(x=3)
+        assert simplify_pass.analysis_cache == AnalysisCache(
+            store=[
+                AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
+            ]
+        )
 
+    def test_chain_simplify_automated_analysis(self, model):
+        simplify_pass = Chain(Post(MySimplify()), Post(MySimplify()))
 
-def test_chain_simplify_automated_analysis(model):
-    simplify_pass = Chain(Post(MySimplify()), Post(MySimplify()))
+        new_model = simplify_pass(model)
 
-    new_model = simplify_pass(model)
+        assert new_model == MyInt(x=3)
+        assert simplify_pass.analysis_cache == AnalysisCache(
+            store=[
+                AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
+                AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=1)),
+            ]
+        )
 
-    assert new_model == MyInt(x=3)
-    assert simplify_pass.analysis_cache == AnalysisCache(
-        store=[
-            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
-            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=1)),
-        ]
-    )
+    def test_evaluate_automated_analysis(self, model):
+        evaluate_pass = Post(MyEvaluate())
 
+        new_model = evaluate_pass(model)
 
-def test_evaluate_automated_analysis(model):
-    evaluate_pass = Post(MyEvaluate())
+        assert new_model == 3
+        assert evaluate_pass.analysis_cache == AnalysisCache(
+            store=[
+                AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
+            ]
+        )
 
-    new_model = evaluate_pass(model)
+    def test_chain_evaluate_automated_analysis(self, model):
+        evaluate_pass = Chain(Post(MyEvaluate()), Post(MyEvaluate()))
 
-    assert new_model == 3
-    assert evaluate_pass.analysis_cache == AnalysisCache(
-        store=[
-            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
-        ]
-    )
+        new_model = evaluate_pass(model)
 
-
-def test_chain_evaluate_automated_analysis(model):
-    evaluate_pass = Chain(Post(MyEvaluate()), Post(MyEvaluate()))
-
-    new_model = evaluate_pass(model)
-
-    assert new_model == 3
-    assert evaluate_pass.analysis_cache == AnalysisCache(
-        store=[
-            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
-            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=0)),
-        ]
-    )
+        assert new_model == 3
+        assert evaluate_pass.analysis_cache == AnalysisCache(
+            store=[
+                AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
+                AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=0)),
+            ]
+        )

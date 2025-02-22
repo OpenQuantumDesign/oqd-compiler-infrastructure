@@ -61,35 +61,37 @@ class MySimplify(RewriteRule):
 
 
 ########################################################################################
-
-
 @pytest.fixture
 def model():
     return MyInt(x=1) + MyInt(x=2)
 
 
-def test_post_walk_simplify_rewrite_rule(model):
-    simplify_pass = Post(MySimplify())
-
-    new_model = simplify_pass(model)
-
-    assert new_model == MyInt(x=3)
+########################################################################################
 
 
-def test_pre_walk_simplify_rewrite_rule(model):
-    simplify_pass = Pre(MySimplify())
+class TestRewriteRule:
+    def test_post_walk_simplify_rewrite_rule(self, model):
+        simplify_pass = Post(MySimplify())
 
-    new_model = simplify_pass(model)
+        new_model = simplify_pass(model)
 
-    assert new_model == MyInt(x=3)
+        assert new_model == MyInt(x=3)
+
+    def test_pre_walk_simplify_rewrite_rule(self, model):
+        simplify_pass = Pre(MySimplify())
+
+        new_model = simplify_pass(model)
+
+        assert new_model == MyInt(x=3)
 
 
 ########################################################################################
 
 
-def test_evaluate_conversion_rule(model):
-    evaluate_pass = Post(MyEvaluate())
+class TestConversionRule:
+    def test_evaluate_conversion_rule(self, model):
+        evaluate_pass = Post(MyEvaluate())
 
-    new_model = evaluate_pass(model)
+        new_model = evaluate_pass(model)
 
-    assert new_model == 3
+        assert new_model == 3
