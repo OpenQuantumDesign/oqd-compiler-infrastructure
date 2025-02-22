@@ -62,7 +62,12 @@ class WalkBase(PassBase):
                 analysis_cls,
                 analysis_walk,
             ) in self.rule.analysis_requirements.requirements:
-                if not self.analysis_cache[analysis_cls.__name__]:
+                if not list(
+                    filter(
+                        lambda entry: entry.valid,
+                        self.analysis_cache[analysis_cls.__name__],
+                    )
+                ):
                     analysis = analysis_walk(analysis_cls())
 
                     analysis.analysis_cache = self.analysis_cache
