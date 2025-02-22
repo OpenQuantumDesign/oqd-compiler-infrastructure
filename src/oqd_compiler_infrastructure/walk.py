@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from oqd_compiler_infrastructure.base import PassBase
+from oqd_compiler_infrastructure.rewriter import Chain
 from oqd_compiler_infrastructure.rule import AnalysisRule, ConversionRule
 
 ########################################################################################
@@ -58,21 +59,20 @@ class WalkBase(PassBase):
     def before_call(self, model):
         super().before_call(model)
         if self.rule.analysis_requirements:
-            for (
-                analysis_cls,
-                analysis_walk,
-            ) in self.rule.analysis_requirements.requirements:
-                if not list(
-                    filter(
-                        lambda entry: entry.valid,
-                        self.analysis_cache[analysis_cls.__name__],
+            analysis_pass = Chain(
+                *[
+                    analysis_walk(analysis_cls())
+                    for analysis_cls, analysis_walk in self.rule.analysis_requirements.requirements
+                    if not list(
+                        filter(
+                            lambda entry: entry.valid,
+                            self.analysis_cache[analysis_cls.__name__],
+                        )
                     )
-                ):
-                    analysis = analysis_walk(analysis_cls())
-
-                    analysis.analysis_cache = self.analysis_cache
-
-                    analysis(model)
+                ]
+            )
+            analysis_pass.analysis_cache = self.analysis_cache
+            analysis_pass(model)
 
     def after_call(self, model):
         super().after_call(model)
