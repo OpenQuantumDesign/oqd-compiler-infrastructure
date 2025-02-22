@@ -21,6 +21,7 @@ from oqd_compiler_infrastructure import (
     AnalysisResult,
     AnalysisRule,
     Chain,
+    ConversionRule,
     FixedPoint,
     Post,
     Pre,
@@ -48,6 +49,7 @@ class MyAdd(MyMath):
     right: MyInt
 
 
+########################################################################################
 class CountTerms(AnalysisRule):
     def __init__(self):
         super().__init__()
@@ -92,6 +94,9 @@ class WalkOrder(AnalysisRule):
         self.counter += 1
 
 
+########################################################################################
+
+
 class RequiresSingle(RewriteRule):
     analysis_requirements = AnalysisRequirements(requirements=[CountTerms])
 
@@ -106,6 +111,32 @@ class RequiresPostWalk(RewriteRule):
 
 class RequiresPreWalk(RewriteRule):
     analysis_requirements = AnalysisRequirements(requirements=[(WalkOrder, Pre)])
+
+
+class MyEvaluate(ConversionRule):
+    analysis_requirements = AnalysisRequirements(requirements=[CountTerms])
+
+    def after_call(self, model):
+        super().after_call(model)
+        self.analysis_cache.invalidate("CountTerms")
+
+    def map_MyInt(self, model, operands):
+        return model.x
+
+    def map_MyAdd(self, model, operands):
+        return operands["left"] + operands["right"]
+
+
+class MySimplify(RewriteRule):
+    analysis_requirements = AnalysisRequirements(requirements=[CountTerms])
+
+    def after_call(self, model):
+        super().after_call(model)
+        self.analysis_cache.invalidate("CountTerms")
+
+    def map_MyAdd(self, model):
+        if isinstance(model.left, MyInt) and isinstance(model.right, MyInt):
+            return MyInt(x=model.left.x + model.right.x)
 
 
 ########################################################################################
@@ -288,5 +319,62 @@ def test_requires_pre_walk_automated_analysis(model):
                     counter=5,
                 ),
             ),
+        ]
+    )
+
+
+########################################################################################
+
+
+def test_simplify_automated_analysis(model):
+    rewrite_pass = Post(MySimplify())
+
+    new_model = rewrite_pass(model)
+
+    assert new_model == MyInt(x=3)
+    assert rewrite_pass.analysis_cache == AnalysisCache(
+        store=[
+            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
+        ]
+    )
+
+
+def test_chain_simplify_automated_analysis(model):
+    rewrite_pass = Chain(Post(MySimplify()), Post(MySimplify()))
+
+    new_model = rewrite_pass(model)
+
+    assert new_model == MyInt(x=3)
+    assert rewrite_pass.analysis_cache == AnalysisCache(
+        store=[
+            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
+            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=1)),
+        ]
+    )
+
+
+def test_evaluate_automated_analysis(model):
+    rewrite_pass = Post(MyEvaluate())
+
+    new_model = rewrite_pass(model)
+
+    assert new_model == 3
+    assert rewrite_pass.analysis_cache == AnalysisCache(
+        store=[
+            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
+        ]
+    )
+
+
+def test_chain_evaluate_automated_analysis(model):
+    rewrite_pass = Chain(Post(MyEvaluate()), Post(MyEvaluate()))
+
+    new_model = rewrite_pass(model)
+
+    assert new_model == 3
+    assert rewrite_pass.analysis_cache == AnalysisCache(
+        store=[
+            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
+            AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=0)),
         ]
     )
