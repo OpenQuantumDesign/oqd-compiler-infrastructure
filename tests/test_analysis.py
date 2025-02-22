@@ -327,12 +327,12 @@ def test_requires_pre_walk_automated_analysis(model):
 
 
 def test_simplify_automated_analysis(model):
-    rewrite_pass = Post(MySimplify())
+    simplify_pass = Post(MySimplify())
 
-    new_model = rewrite_pass(model)
+    new_model = simplify_pass(model)
 
     assert new_model == MyInt(x=3)
-    assert rewrite_pass.analysis_cache == AnalysisCache(
+    assert simplify_pass.analysis_cache == AnalysisCache(
         store=[
             AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
         ]
@@ -340,12 +340,12 @@ def test_simplify_automated_analysis(model):
 
 
 def test_chain_simplify_automated_analysis(model):
-    rewrite_pass = Chain(Post(MySimplify()), Post(MySimplify()))
+    simplify_pass = Chain(Post(MySimplify()), Post(MySimplify()))
 
-    new_model = rewrite_pass(model)
+    new_model = simplify_pass(model)
 
     assert new_model == MyInt(x=3)
-    assert rewrite_pass.analysis_cache == AnalysisCache(
+    assert simplify_pass.analysis_cache == AnalysisCache(
         store=[
             AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
             AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=1)),
@@ -354,12 +354,12 @@ def test_chain_simplify_automated_analysis(model):
 
 
 def test_evaluate_automated_analysis(model):
-    rewrite_pass = Post(MyEvaluate())
+    evaluate_pass = Post(MyEvaluate())
 
-    new_model = rewrite_pass(model)
+    new_model = evaluate_pass(model)
 
     assert new_model == 3
-    assert rewrite_pass.analysis_cache == AnalysisCache(
+    assert evaluate_pass.analysis_cache == AnalysisCache(
         store=[
             AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
         ]
@@ -367,12 +367,12 @@ def test_evaluate_automated_analysis(model):
 
 
 def test_chain_evaluate_automated_analysis(model):
-    rewrite_pass = Chain(Post(MyEvaluate()), Post(MyEvaluate()))
+    evaluate_pass = Chain(Post(MyEvaluate()), Post(MyEvaluate()))
 
-    new_model = rewrite_pass(model)
+    new_model = evaluate_pass(model)
 
     assert new_model == 3
-    assert rewrite_pass.analysis_cache == AnalysisCache(
+    assert evaluate_pass.analysis_cache == AnalysisCache(
         store=[
             AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=2)),
             AnalysisResult(name="CountTerms", valid=False, data=dict(N_terms=0)),
