@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from oqd_compiler_infrastructure.base import PassBase
-from oqd_compiler_infrastructure.rule import ConversionRule
+from oqd_compiler_infrastructure.rule import ConversionRule, AnalysisRule
 
 ########################################################################################
 
@@ -55,6 +55,13 @@ class WalkBase(PassBase):
     def children(self):
         return [self.rule]
 
+    def __call__(self, model):
+        model = super().__call__(model)
+
+        if isinstance(self.rule, AnalysisRule):
+            self.analysis_cache.append(self.rule.analysis_result)
+        return model
+
     def map(self, model):
         return self.walk(model)
 
@@ -91,7 +98,7 @@ class Pre(WalkBase):
         new_model = self.rule(model)
 
         new_model = {
-            k: self(v)
+            k: self.map(v)
             for k, v in self.controlled_reverse(new_model.items(), self.reverse)
         }
 
@@ -102,7 +109,9 @@ class Pre(WalkBase):
     def walk_list(self, model):
         new_model = self.rule(model)
 
-        new_model = [self(e) for e in self.controlled_reverse(new_model, self.reverse)]
+        new_model = [
+            self.map(e) for e in self.controlled_reverse(new_model, self.reverse)
+        ]
 
         return self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
@@ -110,7 +119,7 @@ class Pre(WalkBase):
         new_model = self.rule(model)
 
         new_model = tuple(
-            [self(e) for e in self.controlled_reverse(new_model, self.reverse)]
+            [self.map(e) for e in self.controlled_reverse(new_model, self.reverse)]
         )
 
         return self.controlled_reverse(new_model, self.reverse, restore_type=True)
@@ -122,7 +131,7 @@ class Pre(WalkBase):
         for key in self.controlled_reverse(new_model.model_fields.keys(), self.reverse):
             if key == "class_":
                 continue
-            new_fields[key] = self(getattr(new_model, key))
+            new_fields[key] = self.map(getattr(new_model, key))
         new_model = new_model.__class__(**new_fields)
 
         return new_model
@@ -139,7 +148,8 @@ class Post(WalkBase):
 
     def walk_dict(self, model):
         new_model = {
-            k: self(v) for k, v in self.controlled_reverse(model.items(), self.reverse)
+            k: self.map(v)
+            for k, v in self.controlled_reverse(model.items(), self.reverse)
         }
         new_model = {
             k: v for k, v in self.controlled_reverse(new_model.items(), self.reverse)
@@ -153,7 +163,7 @@ class Post(WalkBase):
         return new_model
 
     def walk_list(self, model):
-        new_model = [self(e) for e in self.controlled_reverse(model, self.reverse)]
+        new_model = [self.map(e) for e in self.controlled_reverse(model, self.reverse)]
         new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
         if isinstance(self.rule, ConversionRule):
@@ -164,7 +174,7 @@ class Post(WalkBase):
 
     def walk_tuple(self, model):
         new_model = tuple(
-            [self(e) for e in self.controlled_reverse(model, self.reverse)]
+            [self.map(e) for e in self.controlled_reverse(model, self.reverse)]
         )
         new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
@@ -179,7 +189,7 @@ class Post(WalkBase):
         for key in self.controlled_reverse(model.model_fields.keys(), self.reverse):
             if key == "class_":
                 continue
-            new_fields[key] = self(getattr(model, key))
+            new_fields[key] = self.map(getattr(model, key))
 
         if isinstance(self.rule, ConversionRule):
             self.rule.operands = new_fields
@@ -221,7 +231,7 @@ class Level(WalkBase):
 
         self.rule(self.stack.pop(0))
         if self.stack:
-            self(self.stack[0])
+            self.map(self.stack[0])
         return model
 
     def walk_tuple(self, model):
@@ -233,7 +243,7 @@ class Level(WalkBase):
 
         self.rule(self.stack.pop(0))
         if self.stack:
-            self(self.stack[0])
+            self.map(self.stack[0])
         return model
 
     def walk_dict(self, model):
@@ -245,7 +255,7 @@ class Level(WalkBase):
 
         self.rule(self.stack.pop(0))
         if self.stack:
-            self(self.stack[0])
+            self.map(self.stack[0])
         return model
 
     def walk_VisitableBaseModel(self, model):
@@ -262,7 +272,7 @@ class Level(WalkBase):
 
         self.rule(self.stack.pop(0))
         if self.stack:
-            self(self.stack[0])
+            self.map(self.stack[0])
         return model
 
 
@@ -277,38 +287,42 @@ class In(WalkBase):
 
     def walk_list(self, model):
         for e in self.controlled_reverse(model, self.reverse, restore_type=True)[:-1]:
-            self(e)
+            self.map(e)
 
         self.rule(model)
         if model:
-            self(self.controlled_reverse(model, self.reverse, restore_type=True)[-1])
+            self.map(
+                self.controlled_reverse(model, self.reverse, restore_type=True)[-1]
+            )
         return model
 
     def walk_tuple(self, model):
         for e in self.controlled_reverse(model, self.reverse, restore_type=True)[:-1]:
-            self(e)
+            self.map(e)
 
         self.rule(model)
         if model:
-            self(self.controlled_reverse(model, self.reverse, restore_type=True)[-1])
+            self.map(
+                self.controlled_reverse(model, self.reverse, restore_type=True)[-1]
+            )
         return model
 
     def walk_dict(self, model):
         for v in list(self.controlled_reverse(model.values(), self.reverse))[:-1]:
-            self(v)
+            self.map(v)
 
         self.rule(model)
         if model:
-            self(list(self.controlled_reverse(model.values(), self.reverse))[-1])
+            self.map(list(self.controlled_reverse(model.values(), self.reverse))[-1])
         return model
 
     def walk_VisitableBaseModel(self, model):
         keys = [k for k in model.model_fields.keys() if k != "class_"]
         keys = self.controlled_reverse(keys, self.reverse, restore_type=True)
         for k in keys[:-1]:
-            self(getattr(model, k))
+            self.map(getattr(model, k))
 
         self.rule(model)
         if keys:
-            self(getattr(model, keys[-1]))
+            self.map(getattr(model, keys[-1]))
         return model

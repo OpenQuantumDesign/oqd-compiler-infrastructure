@@ -13,9 +13,43 @@
 # limitations under the License.
 
 
+from __future__ import annotations
+from typing import List, Dict, Any, Annotated
+
+from pydantic import BeforeValidator
+
+########################################################################################
 from oqd_compiler_infrastructure.interface import TypeReflectBaseModel
 
 
 ########################################################################################
+
+
+def _analysis_name(value):
+    if isinstance(value, str):
+        return value
+    else:
+        return value.__class__.__name__
+
+
 class AnalysisCache(TypeReflectBaseModel):
-    pass
+    store: List[AnalysisResult] = []
+
+    def __getitem__(self, idx):
+        return [entry for entry in self.store if entry.name == idx]
+
+    def invalidate(self, name):
+        name = _analysis_name(name)
+
+        relevant_entries = filter(lambda entry: entry.valid, self[name])
+        for entry in relevant_entries:
+            entry.valid = False
+
+    def append(self, entry: AnalysisResult):
+        self.store.append(entry)
+
+
+class AnalysisResult(TypeReflectBaseModel):
+    name: Annotated[str, BeforeValidator(_analysis_name)]
+    valid: bool = True
+    data: Dict[str, Any]

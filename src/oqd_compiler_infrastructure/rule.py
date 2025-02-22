@@ -12,7 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+from abc import ABC, abstractmethod
+from typing import Dict, Any
+
+########################################################################################
 from oqd_compiler_infrastructure.base import PassBase
+from oqd_compiler_infrastructure.analysis import AnalysisResult
 
 ########################################################################################
 
@@ -20,6 +26,7 @@ __all__ = [
     "RuleBase",
     "RewriteRule",
     "ConversionRule",
+    "AnalysisRule",
     "PrettyPrint",
 ]
 
@@ -90,6 +97,25 @@ class ConversionRule(RuleBase):
 
     def generic_map(self, model, operands):
         return model
+
+
+class AnalysisRule(RewriteRule, ABC):
+    def __call__(self, model):
+        self.analysis_cache.invalidate(self)
+
+        model = super().__call__(model)
+        return model
+
+    @property
+    @abstractmethod
+    def analysis_data(self) -> Dict[str, Any]:
+        pass
+
+    @property
+    def analysis_result(self):
+        return AnalysisResult(
+            name=self.__class__.__name__, valid=True, data=self.analysis_data
+        )
 
 
 ########################################################################################

@@ -16,6 +16,10 @@ from abc import ABC, abstractmethod
 
 ########################################################################################
 
+from oqd_compiler_infrastructure.analysis import AnalysisCache
+
+########################################################################################
+
 __all__ = [
     "PassBase",
 ]
@@ -29,7 +33,20 @@ class PassBase(ABC):
     """
 
     def __init__(self):
+        self._analysis_cache = None
         pass
+
+    @property
+    def analysis_cache(self):
+        return self._analysis_cache
+
+    @analysis_cache.setter
+    def analysis_cache(self, value: AnalysisCache):
+        if isinstance(value, AnalysisCache):
+            self._analysis_cache = value
+            return
+
+        raise TypeError(f"Invalid type {type(value)} for analysis cache")
 
     @property
     @abstractmethod
@@ -37,6 +54,12 @@ class PassBase(ABC):
         pass
 
     def __call__(self, model):
+        if self.analysis_cache is None:
+            self.analysis_cache = AnalysisCache()
+
+        for rule in self.children:
+            rule.analysis_cache = self.analysis_cache
+
         self._model = model
 
         model = self.map(model)

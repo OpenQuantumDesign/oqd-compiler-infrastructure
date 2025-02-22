@@ -15,8 +15,9 @@
 from .base import PassBase
 from .interface import TypeReflectBaseModel, VisitableBaseModel
 from .rewriter import Chain, FixedPoint, RewriterBase
-from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
+from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase, AnalysisRule
 from .walk import In, Level, Post, Pre, WalkBase
+from .analysis import AnalysisCache, AnalysisResult
 
 __all__ = [
     "VisitableBaseModel",
@@ -24,6 +25,7 @@ __all__ = [
     "PassBase",
     "RewriteRule",
     "ConversionRule",
+    "AnalysisRule",
     "PrettyPrint",
     "RuleBase",
     "Pre",
@@ -34,4 +36,6 @@ __all__ = [
     "Chain",
     "FixedPoint",
     "RewriterBase",
+    "AnalysisResult",
+    "AnalysisCache",
 ]
