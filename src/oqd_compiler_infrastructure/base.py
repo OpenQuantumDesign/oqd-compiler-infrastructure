@@ -33,7 +33,7 @@ class PassBase(ABC):
 
     def __init__(self):
         self._analysis_cache = None
-        pass
+        self.verbose = False
 
     @property
     def analysis_cache(self):
@@ -60,12 +60,17 @@ class PassBase(ABC):
             rule.analysis_cache = self.analysis_cache
 
     def _call(self, model):
-        self._model = model
+        if self.verbose:
+            print(f"Running {self} on {model.__class__.__name__}({model})")
+
+        _model = model
 
         model = self.map(model)
         if model is None:
-            model = self._model
+            model = _model
 
+        if self.verbose:
+            print(f"Completed {self} on {_model.__class__.__name__}({_model})")
         return model
 
     def after_call(self, model):
