@@ -14,13 +14,13 @@
 
 
 from __future__ import annotations
-from typing import List, Dict, Any, Annotated
+
+from typing import Annotated, Any, Dict, List
 
 from pydantic import BeforeValidator
 
 ########################################################################################
 from oqd_compiler_infrastructure.interface import TypeReflectBaseModel
-
 
 ########################################################################################
 

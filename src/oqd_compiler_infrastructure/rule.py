@@ -13,12 +13,14 @@
 # limitations under the License.
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Any, Dict
+
+from oqd_compiler_infrastructure.analysis import AnalysisResult
 
 ########################################################################################
 from oqd_compiler_infrastructure.base import PassBase
-from oqd_compiler_infrastructure.analysis import AnalysisResult
 
 ########################################################################################
 

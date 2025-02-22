@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from oqd_compiler_infrastructure.base import PassBase
-from oqd_compiler_infrastructure.rule import ConversionRule, AnalysisRule
+from oqd_compiler_infrastructure.rule import AnalysisRule, ConversionRule
 
 ########################################################################################
 

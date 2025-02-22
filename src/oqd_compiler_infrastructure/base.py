@@ -15,7 +15,6 @@
 from abc import ABC, abstractmethod
 
 ########################################################################################
-
 from oqd_compiler_infrastructure.analysis import AnalysisCache
 
 ########################################################################################
