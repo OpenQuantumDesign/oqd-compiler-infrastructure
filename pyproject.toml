@@ -45,6 +45,12 @@ tests = ["pytest"]
 where = ["src"]
 include = ["oqd_compiler_infrastructure*"]
 
+[dependency-groups]
+dev = [
+    "pre-commit>=4.1.0",
+    "ruff>=0.9.7",
+]
+
 
 [project.urls]
 Homepage = "https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure"
