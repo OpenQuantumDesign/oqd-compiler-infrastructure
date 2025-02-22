@@ -15,14 +15,16 @@
 
 import pytest
 
-########################################################################################
 from oqd_compiler_infrastructure import (
     AnalysisCache,
+    AnalysisRequirements,
     AnalysisResult,
     AnalysisRule,
     Chain,
     FixedPoint,
     Post,
+    Pre,
+    RewriteRule,
     TypeReflectBaseModel,
 )
 
@@ -72,6 +74,38 @@ class CountAdds(AnalysisRule):
 
     def map_MyAdd(self, model):
         self.N_terms += 1
+
+
+class WalkOrder(AnalysisRule):
+    def __init__(self):
+        super().__init__()
+
+        self.walk_order = []
+        self.counter = 0
+
+    @property
+    def analysis_data(self):
+        return dict(walk_order=self.walk_order, counter=self.counter)
+
+    def generic_map(self, model):
+        self.walk_order.append((self.counter, model))
+        self.counter += 1
+
+
+class RequiresSingle(RewriteRule):
+    analysis_requirements = AnalysisRequirements(requirements=[CountTerms])
+
+
+class RequiresMultiple(RewriteRule):
+    analysis_requirements = AnalysisRequirements(requirements=[CountTerms, CountAdds])
+
+
+class RequiresPostWalk(RewriteRule):
+    analysis_requirements = AnalysisRequirements(requirements=[WalkOrder])
+
+
+class RequiresPreWalk(RewriteRule):
+    analysis_requirements = AnalysisRequirements(requirements=[(WalkOrder, Pre)])
 
 
 ########################################################################################
@@ -162,5 +196,97 @@ def test_chain_analysis_pass(model):
         store=[
             AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
             AnalysisResult(name="CountAdds", valid=True, data=dict(N_terms=1)),
+        ]
+    )
+
+
+########################################################################################
+
+
+def test_single_automated_analysis(model):
+    analysis_pass = Post(RequiresSingle())
+
+    analysis_pass(model)
+
+    assert analysis_pass.analysis_cache == AnalysisCache(
+        store=[
+            AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
+        ]
+    )
+
+
+def test_multiple_automated_analysis(model):
+    analysis_pass = Post(RequiresMultiple())
+
+    analysis_pass(model)
+
+    assert analysis_pass.analysis_cache == AnalysisCache(
+        store=[
+            AnalysisResult(name="CountTerms", valid=True, data=dict(N_terms=2)),
+            AnalysisResult(name="CountAdds", valid=True, data=dict(N_terms=1)),
+        ]
+    )
+
+
+def test_requires_post_walk_automated_analysis(model):
+    analysis_pass = Post(RequiresPostWalk())
+
+    analysis_pass(model)
+
+    assert analysis_pass.analysis_cache == AnalysisCache(
+        store=[
+            AnalysisResult(
+                name="WalkOrder",
+                valid=True,
+                data=dict(
+                    walk_order=[
+                        (0, 1),
+                        (1, MyInt(class_="MyInt", x=1)),
+                        (2, 2),
+                        (3, MyInt(class_="MyInt", x=2)),
+                        (
+                            4,
+                            MyAdd(
+                                class_="MyAdd",
+                                left=MyInt(class_="MyInt", x=1),
+                                right=MyInt(class_="MyInt", x=2),
+                            ),
+                        ),
+                    ],
+                    counter=5,
+                ),
+            ),
+        ]
+    )
+
+
+def test_requires_pre_walk_automated_analysis(model):
+    analysis_pass = Post(RequiresPreWalk())
+
+    analysis_pass(model)
+
+    assert analysis_pass.analysis_cache == AnalysisCache(
+        store=[
+            AnalysisResult(
+                name="WalkOrder",
+                valid=True,
+                data=dict(
+                    walk_order=[
+                        (
+                            0,
+                            MyAdd(
+                                class_="MyAdd",
+                                left=MyInt(class_="MyInt", x=1),
+                                right=MyInt(class_="MyInt", x=2),
+                            ),
+                        ),
+                        (1, MyInt(class_="MyInt", x=1)),
+                        (2, 1),
+                        (3, MyInt(class_="MyInt", x=2)),
+                        (4, 2),
+                    ],
+                    counter=5,
+                ),
+            ),
         ]
     )
