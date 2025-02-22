@@ -28,6 +28,7 @@ from oqd_compiler_infrastructure import (
 
 class PrintWalkOrder(RewriteRule):
     def __init__(self):
+        super().__init__()
         self.current_index = 0
         self.string = ""
 
