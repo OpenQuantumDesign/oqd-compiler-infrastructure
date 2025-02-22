@@ -17,9 +17,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
-from oqd_compiler_infrastructure.analysis import AnalysisResult
-
-########################################################################################
+from oqd_compiler_infrastructure.analysis import (
+    AnalysisResult,
+)
 from oqd_compiler_infrastructure.base import PassBase
 
 ########################################################################################
@@ -40,6 +40,8 @@ class RuleBase(PassBase):
     """
     This class represents a rule applied to an IR.
     """
+
+    analysis_requirements = None
 
     @property
     def children(self):
@@ -102,11 +104,9 @@ class ConversionRule(RuleBase):
 
 
 class AnalysisRule(RewriteRule, ABC):
-    def __call__(self, model):
+    def before_call(self, model):
+        super().before_call(model)
         self.analysis_cache.invalidate(self)
-
-        model = super().__call__(model)
-        return model
 
     @property
     @abstractmethod

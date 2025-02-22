@@ -15,9 +15,9 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Dict, List
+from typing import Annotated, Any, Dict, List, Tuple, Type
 
-from pydantic import BeforeValidator
+from pydantic import BeforeValidator, ConfigDict
 
 ########################################################################################
 from oqd_compiler_infrastructure.interface import TypeReflectBaseModel
@@ -53,3 +53,32 @@ class AnalysisResult(TypeReflectBaseModel):
     name: Annotated[str, BeforeValidator(_analysis_name)]
     valid: bool = True
     data: Dict[str, Any]
+
+
+########################################################################################
+
+
+def validate_analysis_requirement(value):
+    if isinstance(value, tuple):
+        return value
+    else:
+        return (value, Post)
+
+
+class AnalysisRequirements(TypeReflectBaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    requirements: List[
+        Annotated[
+            Tuple[Type[AnalysisRule], Type[WalkBase]],
+            BeforeValidator(validate_analysis_requirement),
+        ]
+    ] = []
+
+
+########################################################################################
+
+from oqd_compiler_infrastructure.rule import AnalysisRule  # noqa: E402
+from oqd_compiler_infrastructure.walk import Post, WalkBase  # noqa: E402
+
+AnalysisRequirements.model_rebuild()

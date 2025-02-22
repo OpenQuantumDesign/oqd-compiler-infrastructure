@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .analysis import AnalysisCache, AnalysisResult
+from .analysis import AnalysisCache, AnalysisRequirements, AnalysisResult
 from .base import PassBase
 from .interface import TypeReflectBaseModel, VisitableBaseModel
 from .rewriter import Chain, FixedPoint, RewriterBase
@@ -38,4 +38,5 @@ __all__ = [
     "RewriterBase",
     "AnalysisResult",
     "AnalysisCache",
+    "AnalysisRequirements",
 ]

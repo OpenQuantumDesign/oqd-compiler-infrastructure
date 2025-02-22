@@ -55,12 +55,24 @@ class WalkBase(PassBase):
     def children(self):
         return [self.rule]
 
-    def __call__(self, model):
-        model = super().__call__(model)
+    def before_call(self, model):
+        super().before_call(model)
+        if self.rule.analysis_requirements:
+            for (
+                analysis_cls,
+                analysis_walk,
+            ) in self.rule.analysis_requirements.requirements:
+                if not self.analysis_cache[analysis_cls.__name__]:
+                    analysis = analysis_walk(analysis_cls())
 
+                    analysis.analysis_cache = self.analysis_cache
+
+                    analysis(model)
+
+    def after_call(self, model):
+        super().after_call(model)
         if isinstance(self.rule, AnalysisRule):
             self.analysis_cache.append(self.rule.analysis_result)
-        return model
 
     def map(self, model):
         return self.walk(model)

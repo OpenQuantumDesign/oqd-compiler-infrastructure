@@ -52,18 +52,29 @@ class PassBase(ABC):
     def children(self):
         pass
 
-    def __call__(self, model):
+    def before_call(self, model):
         if self.analysis_cache is None:
             self.analysis_cache = AnalysisCache()
 
         for rule in self.children:
             rule.analysis_cache = self.analysis_cache
 
+    def _call(self, model):
         self._model = model
 
         model = self.map(model)
         if model is None:
             model = self._model
+
+        return model
+
+    def after_call(self, model):
+        pass
+
+    def __call__(self, model):
+        self.before_call(model)
+        model = self._call(model)
+        self.after_call(model)
         return model
 
     @abstractmethod
