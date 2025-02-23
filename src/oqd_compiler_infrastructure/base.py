@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import ABC, abstractmethod
+from __future__ import annotations
 
-########################################################################################
+from abc import ABC, abstractmethod
+from typing import Tuple
+
 from oqd_compiler_infrastructure.analysis import AnalysisCache
 
 ########################################################################################
@@ -33,7 +35,17 @@ class PassBase(ABC):
 
     def __init__(self):
         self._analysis_cache = None
-        self.verbose = False
+        self._verbose = False
+
+    def set_verbose(
+        self, state: bool, *, cascade: bool = False, exclude: Tuple[PassBase] = ()
+    ):
+        if not isinstance(self, exclude):
+            self._verbose = state
+
+        if cascade:
+            for child in self.children:
+                child.set_verbose(state, cascade=cascade, exclude=exclude)
 
     @property
     def analysis_cache(self):
@@ -60,7 +72,7 @@ class PassBase(ABC):
             rule.analysis_cache = self.analysis_cache
 
     def _call(self, model):
-        if self.verbose:
+        if self._verbose:
             print(f"Running {self} on {model.__class__.__name__}({model})")
 
         _model = model
@@ -69,7 +81,7 @@ class PassBase(ABC):
         if model is None:
             model = _model
 
-        if self.verbose:
+        if self._verbose:
             print(f"Completed {self} on {_model.__class__.__name__}({_model})")
         return model
 
