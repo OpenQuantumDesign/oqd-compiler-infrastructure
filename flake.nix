@@ -41,6 +41,7 @@
               mkdocstrings
               mkdocs-material
               mkdocstrings-python
+              mdx-truly-sane-lists
 
               # Test dependencies
               pytest
