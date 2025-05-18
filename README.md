@@ -32,6 +32,55 @@ or alternatively from `git`:
 pip install git+https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure.git
 ```
 
+### Installation with Nix
+
+You can use this package with Nix in several ways:
+
+1. Using the development environment:
+```bash
+# Clone the repository
+git clone https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure.git
+cd oqd-compiler-infrastructure
+
+# Enter the development shell
+nix develop
+```
+
+2. Building the package:
+```bash
+nix build github:OpenQuantumDesign/oqd-compiler-infrastructure
+```
+
+### Using in Your Nix Projects
+
+To use this package in your own Nix project, you can add it to your `flake.nix`:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    oqd-compiler.url = "github:OpenQuantumDesign/oqd-compiler-infrastructure";
+  };
+
+  outputs = { self, nixpkgs, oqd-compiler }: {
+    # For using in a development shell
+    devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
+      buildInputs = [
+        oqd-compiler.packages.x86_64-linux.default
+      ];
+    };
+
+    # For using as a dependency in your package
+    packages.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.python3Packages.buildPythonPackage {
+      # ... your package configuration ...
+      propagatedBuildInputs = [
+        oqd-compiler.packages.x86_64-linux.default
+      ];
+    };
+  };
+}
+```
+
 For development, clone the repository locally:
 
 ```bash
