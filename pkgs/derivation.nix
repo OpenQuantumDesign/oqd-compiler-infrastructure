@@ -53,7 +53,7 @@ buildPythonPackage rec {
   meta = with lib; {
     description = "OpenQuantum Design Compiler Infrastructure";
     homepage = "https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure";
-    license = licenses.apache20;
+    license = licenses.asl20;
     maintainers = with maintainers; [ ];
   };
 }
