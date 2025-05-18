@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .analysis import AnalysisCache, AnalysisRequirements, AnalysisResult
 from .base import PassBase
 from .interface import TypeReflectBaseModel, VisitableBaseModel
 from .rewriter import Chain, FixedPoint, RewriterBase
-from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
+from .rule import AnalysisRule, ConversionRule, PrettyPrint, RewriteRule, RuleBase
 from .walk import In, Level, Post, Pre, WalkBase
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "PassBase",
     "RewriteRule",
     "ConversionRule",
+    "AnalysisRule",
     "PrettyPrint",
     "RuleBase",
     "Pre",
@@ -34,4 +36,7 @@ __all__ = [
     "Chain",
     "FixedPoint",
     "RewriterBase",
+    "AnalysisResult",
+    "AnalysisCache",
+    "AnalysisRequirements",
 ]
