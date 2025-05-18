@@ -46,6 +46,7 @@ buildPythonPackage rec {
     mkdocstrings
     mkdocs-material
     mkdocstrings-python
+    setuptools
   ];
 
   pythonImportsCheck = [ "oqd_compiler_infrastructure" ];
