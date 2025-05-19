@@ -22,6 +22,7 @@
 , mkdocs-material
 , mkdocstrings-python
 , mdx-truly-sane-lists
+, setuptools
 }:
 
 buildPythonPackage rec {
