@@ -27,9 +27,7 @@
         pythonPackages = python.pkgs;
       in
       {
-        packages.default = pythonPackages.callPackage ./pkgs/derivation.nix {
-          inherit (pythonPackages) setuptools;
-        };
+        packages.default = pythonPackages.callPackage ./pkgs/derivation.nix { };
 
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
