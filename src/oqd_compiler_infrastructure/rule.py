@@ -102,6 +102,15 @@ class ConversionRule(RuleBase):
     def generic_map(self, model, operands):
         return model
 
+    def map_dict(self, model, operands):
+        return operands
+
+    def map_tuple(self, model, operands):
+        return operands
+
+    def map_list(self, model, operands):
+        return operands
+
 
 class AnalysisRule(RewriteRule, ABC):
     def before_call(self, model):

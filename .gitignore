@@ -166,4 +166,5 @@ cython_debug/
 .github/workflows/_*.yml
 _scripts
 
+uv.lock
 .pre-commit-config.yaml
