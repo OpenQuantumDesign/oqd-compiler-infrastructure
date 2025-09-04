@@ -147,8 +147,9 @@ class Post(WalkBase):
 
         if isinstance(self.rule, ConversionRule):
             self.rule.operands = new_model
-
-        new_model = self.rule(new_model)
+            new_model = self.rule(model)
+        else:
+            new_model = self.rule(new_model)
 
         return new_model
 
@@ -158,8 +159,10 @@ class Post(WalkBase):
 
         if isinstance(self.rule, ConversionRule):
             self.rule.operands = new_model
+            new_model = self.rule(model)
+        else:
+            new_model = self.rule(new_model)
 
-        new_model = self.rule(new_model)
         return new_model
 
     def walk_tuple(self, model):
@@ -170,8 +173,10 @@ class Post(WalkBase):
 
         if isinstance(self.rule, ConversionRule):
             self.rule.operands = new_model
+            new_model = self.rule(model)
+        else:
+            new_model = self.rule(new_model)
 
-        new_model = self.rule(new_model)
         return new_model
 
     def walk_VisitableBaseModel(self, model):

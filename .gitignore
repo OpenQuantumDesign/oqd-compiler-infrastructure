@@ -167,3 +167,4 @@ cython_debug/
 _scripts
 
 uv.lock
+.pre-commit-config.yaml
