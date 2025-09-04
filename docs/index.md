@@ -1,4 +1,4 @@
-# 
+#
 
 <p align="center">
   <img src="img/oqd-logo-black.png#only-light" alt="Logo" style="max-height: 200px;">
@@ -18,7 +18,8 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 ### What's here:
-This repository contains the supporting infrastructure, base classes, and abstractions 
+
+This repository contains the supporting infrastructure, base classes, and abstractions
 for creating custom compiler analysis, verification, and transformation passes.
 The modules in the repository are utilized for, e.g., lowering from the analog to atomic
 intermediate representations, and the atomic representation to base metal descriptions of
@@ -115,6 +116,7 @@ block-beta
    class IR normal
    class RealTime normal
 ```
+
 The lowering and compilation passes, used in the vertical lines connecting
-abstraction layers, are based on the compiler infrastructure components contained 
+abstraction layers, are based on the compiler infrastructure components contained
 in this repository.

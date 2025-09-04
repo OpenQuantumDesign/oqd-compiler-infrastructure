@@ -11,10 +11,9 @@
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-
-
 ### What's here:
-This repository contains the supporting infrastructure, base classes, and abstractions 
+
+This repository contains the supporting infrastructure, base classes, and abstractions
 for creating custom compiler analysis, verification, and transformation passes.
 The modules in the repository are utilized for, e.g., lowering from the analog to atomic
 intermediate representations, and the atomic representation to bare metal descriptions of
@@ -23,11 +22,13 @@ quantum programs.
 ## Installation
 
 Install with `pip`:
+
 ```bash
 pip install oqd-compiler-infrastructure
 ```
 
 or alternatively from `git`:
+
 ```bash
 pip install git+https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure.git
 ```
@@ -37,6 +38,7 @@ pip install git+https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure
 You can use this package with Nix in several ways:
 
 1. Using the development environment:
+
 ```bash
 # Clone the repository
 git clone https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure.git
@@ -47,6 +49,7 @@ nix develop
 ```
 
 2. Building the package:
+
 ```bash
 nix build github:OpenQuantumDesign/oqd-compiler-infrastructure
 ```
@@ -187,6 +190,7 @@ block-beta
    class IR normal
    class RealTime normal
 ```
+
 The lowering and compilation passes, used in the vertical lines connecting
-abstraction layers, are based on the compiler infrastructure components contained 
+abstraction layers, are based on the compiler infrastructure components contained
 in this repository.

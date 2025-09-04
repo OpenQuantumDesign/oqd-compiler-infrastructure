@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import Any, Dict
+
+from oqd_compiler_infrastructure.analysis import (
+    AnalysisResult,
+)
 from oqd_compiler_infrastructure.base import PassBase
 
 ########################################################################################
@@ -20,6 +28,7 @@ __all__ = [
     "RuleBase",
     "RewriteRule",
     "ConversionRule",
+    "AnalysisRule",
     "PrettyPrint",
 ]
 
@@ -31,6 +40,8 @@ class RuleBase(PassBase):
     """
     This class represents a rule applied to an IR.
     """
+
+    analysis_requirements = None
 
     @property
     def children(self):
@@ -99,6 +110,23 @@ class ConversionRule(RuleBase):
 
     def map_list(self, model, operands):
         return operands
+
+
+class AnalysisRule(RewriteRule, ABC):
+    def before_call(self, model):
+        super().before_call(model)
+        self.analysis_cache.invalidate(self)
+
+    @property
+    @abstractmethod
+    def analysis_data(self) -> Dict[str, Any]:
+        pass
+
+    @property
+    def analysis_result(self):
+        return AnalysisResult(
+            name=self.__class__.__name__, valid=True, data=self.analysis_data
+        )
 
 
 ########################################################################################

@@ -56,12 +56,3 @@ class TypeReflectBaseModel(VisitableBaseModel):
         data["class_"] = cls.__name__
 
         return data
-
-    # @classmethod
-    # def get_subclasses(cls):
-    #     # necessary for deserializing subclassed operators
-    #     def all_subclasses(cls):
-    #         return set(cls.__subclasses__()).union(
-    #             [s for c in cls.__subclasses__() for s in all_subclasses(c)])
-    #     return tuple(all_subclasses(cls))
-    #     # return tuple(cls.__subclasses__())
