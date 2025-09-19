@@ -119,7 +119,9 @@ class Pre(WalkBase):
         new_model = self.rule(model)
 
         new_fields = {}
-        for key in self.controlled_reverse(new_model.model_fields.keys(), self.reverse):
+        for key in self.controlled_reverse(
+            new_model.__class__.model_fields.keys(), self.reverse
+        ):
             if key == "class_":
                 continue
             new_fields[key] = self(getattr(new_model, key))
@@ -181,7 +183,9 @@ class Post(WalkBase):
 
     def walk_VisitableBaseModel(self, model):
         new_fields = {}
-        for key in self.controlled_reverse(model.model_fields.keys(), self.reverse):
+        for key in self.controlled_reverse(
+            model.__class__.model_fields.keys(), self.reverse
+        ):
             if key == "class_":
                 continue
             new_fields[key] = self(getattr(model, key))
@@ -260,7 +264,11 @@ class Level(WalkBase):
 
         self.stack.extend(
             self.controlled_reverse(
-                [getattr(model, k) for k in model.model_fields.keys() if k != "class_"],
+                [
+                    getattr(model, k)
+                    for k in model.__class__.model_fields.keys()
+                    if k != "class_"
+                ],
                 self.reverse,
             )
         )
@@ -308,7 +316,7 @@ class In(WalkBase):
         return model
 
     def walk_VisitableBaseModel(self, model):
-        keys = [k for k in model.model_fields.keys() if k != "class_"]
+        keys = [k for k in model.__class__.model_fields.keys() if k != "class_"]
         keys = self.controlled_reverse(keys, self.reverse, restore_type=True)
         for k in keys[:-1]:
             self(getattr(model, k))
