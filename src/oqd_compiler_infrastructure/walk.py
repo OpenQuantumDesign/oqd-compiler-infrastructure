@@ -129,6 +129,16 @@ class Pre(WalkBase):
 
         return new_model
 
+    def walk_AST(self, model):
+        new_model = self.rule(model)
+
+        new_fields = {}
+        for key in self.controlled_reverse(new_model.__class__._fields, self.reverse):
+            new_fields[key] = self(getattr(new_model, key))
+        new_model = new_model.__class__(**new_fields)
+
+        return new_model
+
 
 class Post(WalkBase):
     """
@@ -188,6 +198,20 @@ class Post(WalkBase):
         ):
             if key == "class_":
                 continue
+            new_fields[key] = self(getattr(model, key))
+
+        if isinstance(self.rule, ConversionRule):
+            self.rule.operands = new_fields
+            new_model = self.rule(model)
+        else:
+            new_model = model.__class__(**new_fields)
+            new_model = self.rule(new_model)
+
+        return new_model
+
+    def walk_AST(self, model):
+        new_fields = {}
+        for key in self.controlled_reverse(model.__class__._fields, self.reverse):
             new_fields[key] = self(getattr(model, key))
 
         if isinstance(self.rule, ConversionRule):
@@ -278,6 +302,23 @@ class Level(WalkBase):
             self(self.stack[0])
         return model
 
+    def walk_AST(self, model):
+        if self.initial:
+            self.stack.append(model)
+            self.initial = False
+
+        self.stack.extend(
+            self.controlled_reverse(
+                [getattr(model, k) for k in model.__class__._fields if k != "class_"],
+                self.reverse,
+            )
+        )
+
+        self.rule(self.stack.pop(0))
+        if self.stack:
+            self(self.stack[0])
+        return model
+
 
 class In(WalkBase):
     """
@@ -317,6 +358,17 @@ class In(WalkBase):
 
     def walk_VisitableBaseModel(self, model):
         keys = [k for k in model.__class__.model_fields.keys() if k != "class_"]
+        keys = self.controlled_reverse(keys, self.reverse, restore_type=True)
+        for k in keys[:-1]:
+            self(getattr(model, k))
+
+        self.rule(model)
+        if keys:
+            self(getattr(model, keys[-1]))
+        return model
+
+    def walk_AST(self, model):
+        keys = [k for k in model.__class__._fields if k != "class_"]
         keys = self.controlled_reverse(keys, self.reverse, restore_type=True)
         for k in keys[:-1]:
             self(getattr(model, k))
