@@ -1,4 +1,6 @@
+from typing import Any, Dict, Optional
 from .rule import ConversionRule
+from pydantic import BaseModel
 
 import ast
 
@@ -9,6 +11,9 @@ def match(pattern, model):
     matcher = _Matcher(pattern=ast.parse(pattern))
 
     return matcher(model)
+
+
+########################################################################################
 
 
 class _Matcher(ConversionRule):
@@ -48,17 +53,15 @@ class _Matcher(ConversionRule):
             and self.pattern.func.value.id == ("Union")
             else {ast.unparse(self.pattern.func)}
         )
-        print(node_names)
 
         pattern = self.pattern
 
-        variables = {}
-        status = True
+        result = MatchResult(state=True, variables={})
 
         if node_names.intersection(map(lambda x: x.__name__, model.__class__.__mro__)):
             for a in pattern.args:
                 if isinstance(a, ast.Name):
-                    variables[a.id] = model
+                    result.update({a.id: model})
                     continue
                 raise TypeError(
                     f"Unsupported type ({a.__class__.__name__}) when matching args"
@@ -67,25 +70,52 @@ class _Matcher(ConversionRule):
             for k in pattern.keywords:
                 if isinstance(k.value, ast.Call):
                     self.pattern = k.value
-                    _status, _variables = self(getattr(model, k.arg))
+                    _result = self(getattr(model, k.arg))
 
-                    status = status and _status
-                    if status:
-                        variables.update(_variables)
-
+                    result.add(_result)
                     continue
 
                 if isinstance(k.value, ast.Constant) and k.value.value == Ellipsis:
                     continue
 
                 if isinstance(k.value, ast.Name):
-                    variables[k.value.id] = getattr(model, k.arg)
+                    result.update({k.value.id: getattr(model, k.arg)})
                     continue
 
                 raise TypeError(
                     f"Unsupported type ({k.value.__class__.__name__}) when matching keywords"
                 )
 
-            return status, variables if status else None
+            return result
         else:
-            return False, None
+            return MatchResult(state=False, variables=None)
+
+
+########################################################################################
+
+
+class MatchResult(BaseModel):
+    state: bool
+    variables: Optional[Dict[str, Any]]
+
+    def __bool__(self):
+        return self.state
+
+    def add(self, other):
+        if not isinstance(other, MatchResult):
+            raise TypeError("Unsupported addition of MatchResult and other type.")
+
+        state = self.state and other.state
+        self.state = state
+
+        if state:
+            variables = dict(**self.variables, **other.variables)
+            self.update(variables)
+
+        return MatchResult(state=state, variables=variables if state else None)
+
+    def update(self, variables):
+        self.variables.update(variables)
+
+    def __getitem__(self, key):
+        return self.variables[key]
