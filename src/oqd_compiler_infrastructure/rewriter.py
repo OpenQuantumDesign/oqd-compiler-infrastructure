@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Any, Callable
 from oqd_compiler_infrastructure.base import PassBase
+import copy
 
 ########################################################################################
 
-__all__ = [
-    "RewriterBase",
-    "Chain",
-    "FixedPoint",
-]
+__all__ = ["RewriterBase", "Chain", "FixedPoint", "Filter"]
 
 ########################################################################################
 
@@ -33,8 +31,6 @@ class RewriterBase(PassBase):
     Acknowledgement:
         This code was inspired by [SynbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl), [Liang.jl](https://github.com/Roger-luo/Liang.jl/tree/main/src/rewrite).
     """
-
-    pass
 
 
 ########################################################################################
@@ -52,7 +48,6 @@ class Chain(RewriterBase):
         super().__init__()
 
         self.rules = list(rules)
-        pass
 
     @property
     def children(self):
@@ -74,16 +69,29 @@ class FixedPoint(RewriterBase):
         This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L117C8-L117C16), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/fixpoint.jl).
     """
 
-    def __init__(self, rule, *, max_iter=1000):
+    def __init__(self, rule, *, max_iter=1000, reuse=False):
         super().__init__()
 
-        self.rule = rule
+        self._rule = rule
         self.max_iter = max_iter
-        pass
+        self.reuse = reuse
+
+        self._rule_copies = []
+
+    @property
+    def rule(self):
+        if self.reuse:
+            return self._rule
+
+        self._rule_copies.append(copy.deepcopy(self._rule))
+        return self._rule_copies[-1]
 
     @property
     def children(self):
-        return [self.rule]
+        if self.reuse:
+            return [self._rule]
+
+        return self._rule_copies
 
     def map(self, model):
         i = 0
@@ -96,3 +104,41 @@ class FixedPoint(RewriterBase):
 
             new_model = _model
             i += 1
+
+
+########################################################################################
+
+
+class Filter(RewriterBase):
+    def __init__(self, function: Callable[[Any], bool], rule: PassBase, *, reuse=False):
+        super().__init__()
+
+        self._rule = rule
+        self.function = function
+        self.reuse = reuse
+
+        self._rule_copies = []
+
+    @property
+    def rule(self):
+        if self.reuse:
+            return self._rule
+
+        self._rule_copies.append(copy.deepcopy(self._rule))
+        return self._rule_copies[-1]
+
+    @property
+    def children(self):
+        if self.reuse:
+            return [self._rule]
+
+        return self._rule_copies
+
+    def map(self, model):
+        return self.filter(model)
+
+    def filter(self, model):
+        if not self.function(model):
+            return model
+
+        return self.rule(model)
