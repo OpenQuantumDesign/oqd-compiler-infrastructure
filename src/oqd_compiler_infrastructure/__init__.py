@@ -17,6 +17,7 @@ from .interface import TypeReflectBaseModel, VisitableBaseModel
 from .rewriter import Chain, FixedPoint, RewriterBase, Filter
 from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
 from .walk import In, Level, Post, Pre, WalkBase
+from .match import Match
 
 __all__ = [
     "VisitableBaseModel",
@@ -35,4 +36,5 @@ __all__ = [
     "FixedPoint",
     "RewriterBase",
     "Filter",
+    "Match",
 ]
