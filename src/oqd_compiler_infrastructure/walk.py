@@ -41,7 +41,6 @@ class WalkBase(PassBase):
 
         self.rule = rule
         self.reverse = reverse
-        pass
 
     @staticmethod
     def controlled_reverse(iterable, reverse, *, restore_type=False):
@@ -71,8 +70,6 @@ class WalkBase(PassBase):
 
     def generic_walk(self, model):
         return self.rule(model)
-
-    pass
 
 
 ########################################################################################

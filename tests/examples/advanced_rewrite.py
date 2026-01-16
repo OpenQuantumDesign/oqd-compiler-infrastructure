@@ -12,31 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
 from oqd_compiler_infrastructure.interface import TypeReflectBaseModel
 from oqd_compiler_infrastructure.rule import RewriteRule
 from oqd_compiler_infrastructure.walk import Post
+
 
 # AST data structures (same as before)
 class Expression(TypeReflectBaseModel):
     """Base class for arithmetic expressions.
     This class serves as the foundation for all expression types in the AST.
     """
-    pass
+
 
 class Number(Expression):
     """Represents a numeric literal.
     Attributes:
         value (float): The numeric value of the literal.
     """
+
     value: float
+
 
 class Variable(Expression):
     """Represents a variable in an expression.
     Attributes:
         name (str): The name of the variable.
     """
+
     name: str
+
 
 class BinaryOp(Expression):
     """Represents a binary operation.
@@ -45,9 +49,11 @@ class BinaryOp(Expression):
         left (Expression): The left operand.
         right (Expression): The right operand.
     """
+
     op: str  # '+', '-', '*', '/'
     left: Expression
     right: Expression
+
 
 class AdvancedAlgebraicSimplifier(RewriteRule):
     """Applies advanced algebraic simplification rules.
@@ -58,6 +64,7 @@ class AdvancedAlgebraicSimplifier(RewriteRule):
     - (x + y) - y = x
     - Distributive law: a * (b + c) = (a * b) + (a * c)
     """
+
     # Implements additional algebraic identities like subtraction and distribution
 
     def map_BinaryOp(self, model):
@@ -69,37 +76,43 @@ class AdvancedAlgebraicSimplifier(RewriteRule):
         """
         # x - x = 0
         # Rule: subtracting identical terms yields zero
-        if model.op == '-' and self._expressions_equal(model.left, model.right):
+        if model.op == "-" and self._expressions_equal(model.left, model.right):
             return Number(value=0)
 
         # x + (-x) = 0
         # Rule: x + (-1 * x) => 0
-        if (model.op == '+' and 
-            isinstance(model.right, BinaryOp) and 
-            model.right.op == '*' and 
-            isinstance(model.right.left, Number) and 
-            model.right.left.value == -1 and 
-            self._expressions_equal(model.left, model.right.right)):
+        if (
+            model.op == "+"
+            and isinstance(model.right, BinaryOp)
+            and model.right.op == "*"
+            and isinstance(model.right.left, Number)
+            and model.right.left.value == -1
+            and self._expressions_equal(model.left, model.right.right)
+        ):
             return Number(value=0)
 
         # Distributive law: a * (b + c) = (a * b) + (a * c)
         # Rule: a * (b + c) => (a*b) + (a*c)
-        if (model.op == '*' and 
-            isinstance(model.right, BinaryOp) and 
-            model.right.op in ['+', '-']):
+        if (
+            model.op == "*"
+            and isinstance(model.right, BinaryOp)
+            and model.right.op in ["+", "-"]
+        ):
             # a * (b + c) -> (a * b) + (a * c)
             return BinaryOp(
                 op=model.right.op,
-                left=BinaryOp(op='*', left=model.left, right=model.right.left),
-                right=BinaryOp(op='*', left=model.left, right=model.right.right)
+                left=BinaryOp(op="*", left=model.left, right=model.right.left),
+                right=BinaryOp(op="*", left=model.left, right=model.right.right),
             )
 
         # (x + y) - y = x
         # Rule: (x + y) - y => x
-        if (model.op == '-' and 
-            isinstance(model.left, BinaryOp) and 
-            model.left.op == '+' and 
-            self._expressions_equal(model.left.right, model.right)):
+        if (
+            model.op == "-"
+            and isinstance(model.left, BinaryOp)
+            and model.left.op == "+"
+            and self._expressions_equal(model.left.right, model.right)
+        ):
             return model.left.left
 
         return model
@@ -113,7 +126,7 @@ class AdvancedAlgebraicSimplifier(RewriteRule):
             bool: True if structurally equal, False otherwise.
         """
         # Compare types and recursively compare sub-expressions
-        if type(expr1) != type(expr2):
+        if type(expr1) is not type(expr2):
             return False
 
         if isinstance(expr1, Number):
@@ -123,11 +136,14 @@ class AdvancedAlgebraicSimplifier(RewriteRule):
             return expr1.name == expr2.name
 
         if isinstance(expr1, BinaryOp):
-            return (expr1.op == expr2.op and 
-                   self._expressions_equal(expr1.left, expr2.left) and 
-                   self._expressions_equal(expr1.right, expr2.right))
+            return (
+                expr1.op == expr2.op
+                and self._expressions_equal(expr1.left, expr2.left)
+                and self._expressions_equal(expr1.right, expr2.right)
+            )
 
         return False
+
 
 def print_expr(expr):
     """Convert an expression into a readable string.
@@ -145,50 +161,32 @@ def print_expr(expr):
         return f"({print_expr(expr.left)} {expr.op} {print_expr(expr.right)})"
     return str(expr)
 
+
 def main():
     """Main function to demonstrate advanced algebraic simplification."""
     # Prepare test cases and run the AdvancedAlgebraicSimplifier
     # Create test expressions
     test_cases = [
         # x - x = 0
-        BinaryOp(
-            op='-',
-            left=Variable(name='x'),
-            right=Variable(name='x')
-        ),
-
+        BinaryOp(op="-", left=Variable(name="x"), right=Variable(name="x")),
         # x + (-1 * x) = 0
         BinaryOp(
-            op='+',
-            left=Variable(name='x'),
-            right=BinaryOp(
-                op='*',
-                left=Number(value=-1),
-                right=Variable(name='x')
-            )
+            op="+",
+            left=Variable(name="x"),
+            right=BinaryOp(op="*", left=Number(value=-1), right=Variable(name="x")),
         ),
-
         # a * (b + c) -> (a * b) + (a * c)
         BinaryOp(
-            op='*',
-            left=Variable(name='a'),
-            right=BinaryOp(
-                op='+',
-                left=Variable(name='b'),
-                right=Variable(name='c')
-            )
+            op="*",
+            left=Variable(name="a"),
+            right=BinaryOp(op="+", left=Variable(name="b"), right=Variable(name="c")),
         ),
-
         # (x + y) - y = x
         BinaryOp(
-            op='-',
-            left=BinaryOp(
-                op='+',
-                left=Variable(name='x'),
-                right=Variable(name='y')
-            ),
-            right=Variable(name='y')
-        )
+            op="-",
+            left=BinaryOp(op="+", left=Variable(name="x"), right=Variable(name="y")),
+            right=Variable(name="y"),
+        ),
     ]
 
     # Create simplifier with Post traversal
@@ -202,5 +200,6 @@ def main():
         result = simplifier(expr)
         print(f"Simplified: {print_expr(result)}")
 
+
 if __name__ == "__main__":
-    main() 
+    main()
