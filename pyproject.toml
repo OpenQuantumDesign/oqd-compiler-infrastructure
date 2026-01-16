@@ -27,7 +27,10 @@ classifiers = [
 ]
 
 
-dependencies = ["pydantic>=2, <3"]
+dependencies = [
+    "ast-comments>=1.2.3",
+    "pydantic>=2, <3",
+]
 
 [project.optional-dependencies]
 docs = [
