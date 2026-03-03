@@ -13,12 +13,13 @@
 # limitations under the License.
 
 from .base import PassBase
-from .interface import TypeReflectBaseModel, VisitableBaseModel
+from .interface import NodeBaseModel, TypeReflectBaseModel, VisitableBaseModel
 from .rewriter import Chain, FixedPoint, RewriterBase
 from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
 from .walk import In, Level, Post, Pre, WalkBase
 
 __all__ = [
+    "NodeBaseModel",
     "VisitableBaseModel",
     "TypeReflectBaseModel",
     "PassBase",

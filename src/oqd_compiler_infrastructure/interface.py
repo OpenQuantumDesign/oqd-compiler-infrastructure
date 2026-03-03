@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Literal
+from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from typing import Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, model_validator
 
 ########################################################################################
 
 __all___ = [
+    "NodeBaseModel",
     "VisitableBaseModel",
     "TypeReflectBaseModel",
 ]
@@ -26,12 +29,41 @@ __all___ = [
 ########################################################################################
 
 
-class VisitableBaseModel(BaseModel):
+class NodeBaseModel(BaseModel):
     """
-    Class representing a visitable datastruct
+    Class representing a node datastruct
     """
 
     model_config = ConfigDict(validate_assignment=True)
+    _parent: Optional[NodeBaseModel] = None
+
+    def accept(self, pass_):
+        return pass_(self)
+
+    @model_validator(mode="after")
+    def assign_parents(self):
+        for k in self.__class__.model_fields.keys():
+            if isinstance(getattr(self, k), VisitableBaseModel):
+                getattr(self, k)._parent = self
+
+            if isinstance(getattr(self, k), (list, tuple)):
+                for x in getattr(self, k):
+                    if isinstance(x, VisitableBaseModel):
+                        x._parent = self
+
+            if isinstance(getattr(self, k), dict):
+                print(getattr(self, k).items())
+                for dk, dv in getattr(self, k).items():
+                    if isinstance(dv, VisitableBaseModel):
+                        getattr(self, k)[dk]._parent = self
+
+        return self
+
+
+class VisitableBaseModel(NodeBaseModel):
+    """
+    Class representing a visitable datastruct
+    """
 
     def accept(self, pass_):
         return pass_(self)
