@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .base import PassBase
-from .dataflow_analysis import (
+from .dataflow import (
     DataflowAnalysis,
     DataflowResult,
     ForwardDataflowAnalysis,
