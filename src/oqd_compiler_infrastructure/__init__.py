@@ -13,7 +13,14 @@
 # limitations under the License.
 
 from .base import PassBase
+from .dataflow_analysis import (
+    DataflowAnalysis,
+    DataflowResult,
+    ForwardDataflowAnalysis,
+    GraphProtocol,
+)
 from .interface import TypeReflectBaseModel, VisitableBaseModel
+from .lattice import Lattice, LatticeBase, TBottom, TTop
 from .rewriter import Chain, FixedPoint, RewriterBase
 from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
 from .walk import In, Level, Post, Pre, WalkBase
@@ -22,6 +29,16 @@ __all__ = [
     "VisitableBaseModel",
     "TypeReflectBaseModel",
     "PassBase",
+    "DataflowAnalysis",
+    "DataflowResult",
+    "ForwardDataflowAnalysis",
+    "GraphProtocol",
+    "Lattice",
+    "LatticeBase",
+    "TBottom",
+    "TList",
+    "TTop",
+    "type_name",
     "RewriteRule",
     "ConversionRule",
     "PrettyPrint",
