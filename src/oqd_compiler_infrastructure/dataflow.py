@@ -22,43 +22,76 @@ NodeType = TypeVar("NodeType")
 StateType = TypeVar("StateType")
 
 class GraphProtocol(Protocol[NodeType]):
+    """
+    Any object passed to `ForwardDataflowAnalysis.analyze` must provide this interface. 
+    The protocol is intentionally minimal so it can adapt to Control Flow Graphs (CFGs),
+    dependency graphs, custom IR graphs, etc.
+    """
     def nodes(self) -> Iterable[NodeType]:
+        """ Returns all nodes in the graph. """
         ...
     def predecessors(self, node: NodeType) -> Iterable[NodeType]:
+        """ Returns all predecessors of a given node. """
         ...
     def successors(self, node: NodeType) -> Iterable[NodeType]:
+        """ Returns all successors of a given node. """
         ...
+
 
 @dataclass(frozen=True)
 class DataflowResult(Generic[NodeType, StateType]):
+    """
+    The result of a dataflow analysis.
+    """
     in_states: dict[NodeType, StateType]
     out_states: dict[NodeType, StateType]
     iterations: int
 
 
 class DataflowAnalysis(ABC, Generic[NodeType, StateType]):
+    """
+    Base class that defines what every dataflow analysis must implement.
+    """
     @abstractmethod
     def bottom(self) -> StateType:
+        """Returns the default starting state for all nodes."""
         pass
 
     @abstractmethod
     def boundary_state(self, node: NodeType) -> StateType:
+        """Returns the extra state injected at a given node."""
         pass
 
     @abstractmethod
     def merge(self, states: Iterable[StateType]) -> StateType:
+        """Returns the combined state of incoming states."""
         pass
 
     @abstractmethod
     def transfer(self, node: NodeType, state_in: StateType) -> StateType:
+        """Returns the state of a given node after transfer."""
         pass
 
     def states_equal(self, t1: StateType, t2: StateType) -> bool:
+        """Returns True if two states are equal."""
         return t1 == t2
 
 
 class ForwardDataflowAnalysis(DataflowAnalysis[NodeType, StateType], Generic[NodeType, StateType]):
+    """
+    Forward dataflow analysis framework.
+    This class implements the fixed point loop.
+    """
     def analyze(self, graph: GraphProtocol[NodeType]) -> DataflowResult[NodeType, StateType]:
+        """
+        Runs the worklist algorithm and returns the result of the dataflow analysis.
+        Steps:
+        - Initializes in/out states with `bottom()`.
+        - Puts all nodes in a worklist.
+        - Recomputes each node from predecessor outputs.
+        - If a node output changes, schedules its successors again.
+        - Returns final states and iteration count.
+        """
         nodes = list(graph.nodes())
         in_states = {node: self.bottom() for node in nodes}
         out_states = {node: self.bottom() for node in nodes}
