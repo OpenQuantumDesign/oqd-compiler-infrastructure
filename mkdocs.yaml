@@ -30,6 +30,8 @@ nav:
   - API Reference:
       - Language:
           - Interface: reference/interface.md
+          - Dataflow: reference/dataflow.md
+          - Lattice: reference/lattice.md
       - Compiler:
           - Base: reference/base.md
           - Rule: reference/rule.md

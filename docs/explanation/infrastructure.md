@@ -203,3 +203,9 @@ The fixed point rewriter transforms a pass by iteratively applying the pass till
 [![](https://img.shields.io/badge/Implementation-7C4DFF)][oqd_compiler_infrastructure.rewriter.FixedPoint]
 ///
 ///
+
+## Dataflow 
+`dataflow` defines a reusable forward dataflow analysis framework.
+
+## Lattice
+`lattice` defines ordering and merge semantics used by analysis states. Use `LatticeBase` to model the state domain, then use `ForwardDataflowAnalysis` to run transfer and merge over a graph. This keeps transfer logic in the analysis class and ordering logic in the lattice class.
