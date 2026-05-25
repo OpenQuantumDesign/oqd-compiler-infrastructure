@@ -13,9 +13,9 @@
 # limitations under the License.
 
 import pytest
-from oqd_compiler_infrastructure import LatticeBase, Bottom, Top
+from oqd_compiler_infrastructure import LatticeBase, LatticeBottom, LatticeTop
 
-class A(Top):
+class A(LatticeTop):
     pass
 
 class B(A):
@@ -28,19 +28,19 @@ class TestLatticeBase:
     @pytest.fixture
     def lattice(self):
         lattice_obj = LatticeBase()
-        lattice_obj.add_node(A, Top)
+        lattice_obj.add_node(A, LatticeTop)
         lattice_obj.add_node(B, A)
         lattice_obj.add_node(C, A)
         return lattice_obj
     
     def test_leq(self, lattice):
-        assert lattice.leq(A, Top)
+        assert lattice.leq(A, LatticeTop)
         assert lattice.leq(B, A)
-        assert lattice.leq(B, Top)
-        assert lattice.leq(Bottom, B)
+        assert lattice.leq(B, LatticeTop)
+        assert lattice.leq(LatticeBottom, B)
 
     def test_join(self, lattice):
         assert lattice.join(B, C) == A
 
     def test_meet(self, lattice):
-        assert lattice.meet(B, C) == Bottom
+        assert lattice.meet(B, C) == LatticeBottom

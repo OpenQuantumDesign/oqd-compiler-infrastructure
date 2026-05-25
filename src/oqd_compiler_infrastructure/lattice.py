@@ -19,15 +19,15 @@ from typing import Generic, TypeVar
 ########################################################################################
 
 
-class Top:
+class LatticeTop:
     """
     Base class representing the top element of the lattice.
-    In `LatticeBase`, nodes are classes that inherit from `Top`.
+    In `LatticeBase`, nodes are classes that inherit from `LatticeTop`.
     """
     pass
 
 
-class Bottom(Top):
+class LatticeBottom(LatticeTop):
     """
     Base class representing the bottom element of the lattice.
     """
@@ -69,14 +69,14 @@ class LatticeBase(Lattice[LatticeType]):
         The map is a dictionary that maps each node of the lattice to its immediate parent(s).
         """
         self.map_node_to_parents = {
-            Bottom: (),
-            Top: (),
+            LatticeBottom: (),
+            LatticeTop: (),
         }
     
     
     def is_class_node(self, t: object) -> bool:
         """Returns True if `t` is a valid lattice node."""
-        return isinstance(t, type) and issubclass(t, Top)
+        return isinstance(t, type) and issubclass(t, LatticeTop)
     
     
     def add_node(self, t, parent):
@@ -101,7 +101,7 @@ class LatticeBase(Lattice[LatticeType]):
     
     def leq(self, t1: LatticeType, t2: LatticeType) -> bool:
         """Returns True if `t1 <= t2` in the lattice."""
-        if t1 is Bottom:
+        if t1 is LatticeBottom:
             return True
         if not self.is_class_node(t1) or not self.is_class_node(t2):
             return False
@@ -117,10 +117,10 @@ class LatticeBase(Lattice[LatticeType]):
         if self.leq(t2, t1):
             return t1
         if not self.is_class_node(t1) or not self.is_class_node(t2):
-            return Top
+            return LatticeTop
         common_ancestors = self.atomic_ancestors(t1).intersection(self.atomic_ancestors(t2))
         if not common_ancestors:
-            return Top
+            return LatticeTop
         
         minimal_ancestors = set()
         for candidate in common_ancestors:
@@ -131,7 +131,7 @@ class LatticeBase(Lattice[LatticeType]):
             if not smaller:
                 minimal_ancestors.add(candidate)
         if len(minimal_ancestors) != 1:
-            return Top
+            return LatticeTop
         return next(iter(minimal_ancestors))
     
     
@@ -141,5 +141,5 @@ class LatticeBase(Lattice[LatticeType]):
             return t1
         if self.leq(t2, t1):
             return t2
-        return Bottom
+        return LatticeBottom
     
