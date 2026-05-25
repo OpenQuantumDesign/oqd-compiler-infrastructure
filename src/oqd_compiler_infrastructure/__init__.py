@@ -20,7 +20,7 @@ from .dataflow import (
     GraphProtocol,
 )
 from .interface import TypeReflectBaseModel, VisitableBaseModel
-from .lattice import Lattice, LatticeBase, TBottom, TTop
+from .lattice import Lattice, LatticeBase, Bottom, Top
 from .rewriter import Chain, FixedPoint, RewriterBase
 from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
 from .walk import In, Level, Post, Pre, WalkBase
@@ -35,9 +35,9 @@ __all__ = [
     "GraphProtocol",
     "Lattice",
     "LatticeBase",
-    "TBottom",
+    "Bottom",
     "TList",
-    "TTop",
+    "Top",
     "type_name",
     "RewriteRule",
     "ConversionRule",
