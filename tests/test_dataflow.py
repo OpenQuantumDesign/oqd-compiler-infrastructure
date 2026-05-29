@@ -78,10 +78,10 @@ class TestForwardDataflowAnalysis:
         )
         result = Reachability().analyze(graph)
 
-        assert result.in_states["entry"] == {"ENTRY"}
-        assert result.out_states["entry"] == {"ENTRY", "entry"}
-        assert result.out_states["mid"] == {"ENTRY", "entry", "mid"}
-        assert result.out_states["exit"] == {"ENTRY", "entry", "mid", "exit"}
+        assert result.in_states["entry"] == set()
+        assert result.out_states["entry"] == {"entry"}
+        assert result.out_states["mid"] == {"entry", "mid"}
+        assert result.out_states["exit"] == {"entry", "mid", "exit"}
         assert result.iterations >= 3
 
 

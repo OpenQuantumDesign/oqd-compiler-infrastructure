@@ -17,7 +17,6 @@ from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass
 from typing import Generic, Iterable, TypeVar, Protocol
-
 from oqd_compiler_infrastructure.lattice import Lattice, LatticeType
 
 NodeType = TypeVar("NodeType")
@@ -66,10 +65,6 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeType]):
         """Returns the default starting state for all nodes."""
         return self.lattice.bottom()
 
-    def boundary_state(self, node: NodeType) -> LatticeType:
-        """Returns the extra state injected at a given node."""
-        return self.bottom()
-
     def merge(self, states: Iterable[LatticeType]) -> LatticeType:
         """Joins incoming states using the lattice's join operation."""
         states_list = list(states)
@@ -88,7 +83,6 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeType]):
 class ForwardDataflowAnalysis(DataflowAnalysis[NodeType, LatticeType], Generic[NodeType, LatticeType]):
     """
     Forward dataflow analysis framework.
-    This class implements the fixed point loop.
     """
     def __init__(self, lattice: Lattice[LatticeType]):
         super().__init__(lattice)
@@ -117,7 +111,7 @@ class ForwardDataflowAnalysis(DataflowAnalysis[NodeType, LatticeType], Generic[N
             iterations += 1
 
             pred_states = [out_states[pred] for pred in graph.predecessors(node)]
-            merged_input = self.merge([self.boundary_state(node), *pred_states])
+            merged_input = self.merge(pred_states)
 
             if not self.states_equal(in_states[node], merged_input):
                 in_states[node] = merged_input
@@ -137,7 +131,7 @@ class ForwardDataflowAnalysis(DataflowAnalysis[NodeType, LatticeType], Generic[N
 
 class MapForwardDataflowAnalysis(ForwardDataflowAnalysis[NodeType, dict[str, LatticeType]], Generic[NodeType, LatticeType]):
     """
-    Helper instance of ForwardDataflowAnalysis for states that need a dict Type
+    Helper instance of ForwardDataflowAnalysis for states that need a dict Type.
     """
     def __init__(self, lattice: Lattice[LatticeType]):
         super().__init__(lattice)
@@ -145,15 +139,12 @@ class MapForwardDataflowAnalysis(ForwardDataflowAnalysis[NodeType, dict[str, Lat
     def bottom(self) -> dict[str, LatticeType]:
         return {}
     
-    def boundary_state(self, node: NodeType) -> dict[str, LatticeType]:
-        return {}
-    
     def merge(self, states: Iterable[dict[str, LatticeType]]) -> dict[str, LatticeType]:
         states_list = list(states)
         if not states_list:
             return {}
         
-        bottom = self.lattice.bottom()
+        bottom = self.bottom()
         all_keys = set().union(*(state.keys() for state in states_list))
             
         merged = {}
@@ -166,7 +157,7 @@ class MapForwardDataflowAnalysis(ForwardDataflowAnalysis[NodeType, dict[str, Lat
         return merged
     
     def states_equal(self, t1: dict[str, LatticeType], t2: dict[str, LatticeType]) -> bool:
-        bottom = self.lattice.bottom()
+        bottom = self.bottom()
         all_keys = set(t1.keys()).union(t2.keys())
         
         for key in all_keys:
