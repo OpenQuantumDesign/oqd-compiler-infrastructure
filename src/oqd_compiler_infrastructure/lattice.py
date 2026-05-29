@@ -42,6 +42,16 @@ class Lattice(ABC, Generic[LatticeType]):
     Abstract base class for a lattice interface.
     """
     @abstractmethod
+    def top(self) -> LatticeType:
+        """Returns the top element of the lattice."""
+        pass
+
+    @abstractmethod
+    def bottom(self) -> LatticeType:
+        """Returns the bottom element of the lattice."""
+        pass
+    
+    @abstractmethod
     def leq(self, t1: LatticeType, t2: LatticeType) -> bool:
         """Returns True if `t1 <= t2` in the lattice."""
         pass
@@ -73,18 +83,28 @@ class LatticeBase(Lattice[LatticeType]):
             LatticeTop: (),
         }
     
+
+    def top(self) -> LatticeType:
+        """Returns the top element of the lattice."""
+        return LatticeTop
+    
+    
+    def bottom(self) -> LatticeType:
+        """Returns the bottom element of the lattice."""
+        return LatticeBottom
+    
     
     def is_class_node(self, t: object) -> bool:
         """Returns True if `t` is a valid lattice node."""
         return isinstance(t, type) and issubclass(t, LatticeTop)
     
     
-    def add_node(self, t, parent):
+    def add_node(self, t: object, parent: object) -> None:
         """Adds a node to the lattice, by tracking the parent(s) of the node."""
         self.map_node_to_parents[t] = (parent,)
     
     
-    def atomic_ancestors(self, t):
+    def atomic_ancestors(self, t: object) -> set[object]:
         """Returns the atomic ancestors of a given node."""
         if not self.is_class_node(t):
             raise TypeError(f"Expected lattice class node, got {t}")
@@ -143,3 +163,4 @@ class LatticeBase(Lattice[LatticeType]):
             return t2
         return LatticeBottom
     
+

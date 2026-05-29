@@ -14,7 +14,7 @@
 
 from dataclasses import dataclass
 from typing import Iterable
-from oqd_compiler_infrastructure import ForwardDataflowAnalysis
+from oqd_compiler_infrastructure import ForwardDataflowAnalysis, Lattice
 
 
 @dataclass
@@ -32,7 +32,27 @@ class SimpleGraph:
     def successors(self, node: str) -> Iterable[str]:
         return self.graph_succs.get(node, [])
 
+
+class SetReachabilityLattice(Lattice[set[str]]):
+    def top(self) -> set[str]:
+        return {"ENTRY", "entry", "mid", "exit"}
+
+    def bottom(self) -> set[str]:
+        return set()
+
+    def leq(self, t1: set[str], t2: set[str]) -> bool:
+        return t1 <= t2
+
+    def join(self, t1: set[str], t2: set[str]) -> set[str]:
+        return t1 | t2
+
+    def meet(self, t1: set[str], t2: set[str]) -> set[str]:
+        return t1 & t2
+
+
 class Reachability(ForwardDataflowAnalysis[str, set[str]]):
+    def __init__(self):
+        super().__init__(SetReachabilityLattice())
     def bottom(self) -> set[str]:
         return set()
 
