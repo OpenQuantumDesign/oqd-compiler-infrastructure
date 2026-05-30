@@ -144,7 +144,7 @@ class MapForwardDataflowAnalysis(ForwardDataflowAnalysis[NodeType, dict[str, Lat
         if not states_list:
             return {}
         
-        bottom = self.bottom()
+        bottom = self.lattice.bottom()
         all_keys = set().union(*(state.keys() for state in states_list))
             
         merged = {}
@@ -157,7 +157,7 @@ class MapForwardDataflowAnalysis(ForwardDataflowAnalysis[NodeType, dict[str, Lat
         return merged
     
     def states_equal(self, t1: dict[str, LatticeType], t2: dict[str, LatticeType]) -> bool:
-        bottom = self.bottom()
+        bottom = self.lattice.bottom()
         all_keys = set(t1.keys()).union(t2.keys())
         
         for key in all_keys:
