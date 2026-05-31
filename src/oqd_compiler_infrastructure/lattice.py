@@ -47,11 +47,6 @@ class Lattice(ABC, Generic[LatticeType], metaclass=Singleton):
     """
 
     @abstractmethod
-    def top(self) -> LatticeType:
-        """Returns the top element of the lattice."""
-        pass
-
-    @abstractmethod
     def bottom(self) -> LatticeType:
         """Returns the bottom element of the lattice."""
         pass
@@ -86,10 +81,6 @@ class LatticeBase(Lattice[LatticeType]):
             LatticeBottom: (),
             LatticeTop: (),
         }
-
-    def top(self) -> LatticeType:
-        """Returns the top element of the lattice."""
-        return LatticeTop
 
     def bottom(self) -> LatticeType:
         """Returns the bottom element of the lattice."""
@@ -160,3 +151,43 @@ class LatticeBase(Lattice[LatticeType]):
         if self.leq(t2, t1):
             return t2
         return LatticeBottom
+
+
+class MapLattice(Lattice[dict[str, LatticeType]], Generic[LatticeType]):
+    """
+    Helper instance of Lattice that builds a lattice for map states.
+    """
+    
+    def __init__(self, value_lattice: Lattice[LatticeType]):
+        self.value_lattice = value_lattice
+    
+    def bottom(self) -> dict[str, LatticeType]:
+        return {}
+    
+    def leq(self, t1: dict[str, LatticeType], t2: dict[str, LatticeType]) -> bool:
+        bottom = self.value_lattice.bottom()
+        keys = set(t1.keys()).union(t2.keys())
+        for k in keys:
+            left_val = t1.get(k, bottom)
+            right_val = t2.get(k, bottom)
+            if not self.value_lattice.leq(left_val, right_val):
+                return False
+        return True
+    
+    def join(self, t1: dict[str, LatticeType], t2: dict[str, LatticeType]) -> dict[str, LatticeType]:
+        bottom = self.value_lattice.bottom()
+        keys = set(t1.keys()).union(t2.keys())
+        out: dict[str, LatticeType] = {}
+        for k in keys:
+            out[k] = self.value_lattice.join(t1.get(k, bottom), t2.get(k, bottom))
+        return out
+    
+    def meet(self, t1: dict[str, LatticeType], t2: dict[str, LatticeType]) -> dict[str, LatticeType]:
+        bottom = self.value_lattice.bottom()
+        keys = set(t1.keys()).union(t2.keys())
+        out: dict[str, LatticeType] = {}
+        for k in keys:
+            out[k] = self.value_lattice.meet(t1.get(k, bottom), t2.get(k, bottom))
+        return out
+    
+    

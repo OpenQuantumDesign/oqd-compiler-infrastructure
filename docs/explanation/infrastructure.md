@@ -207,7 +207,6 @@ The fixed point rewriter transforms a pass by iteratively applying the pass till
 ## Lattice
 
 The `Lattice` class in [`lattice.py`](../../src/oqd_compiler_infrastructure/lattice.py) defines a generic lattice interface with all the methods it requires. The following methods are defined:
-- top(): Returns the top element of the lattice.
 - bottom(): Returns the bottom element of the lattice.
 - leq(): Returns True if `t1 <= t2` in the lattice.
 - join(): Returns the least upper bound of `t1` and `t2`.
@@ -222,7 +221,9 @@ The `LatticeBase` class defines a simple concrete implementation of a `Lattice`.
 
 These helper methods are used in the concrete implementation of the lattice operation methods: `leq`, `join`, and `meet`.
 
-You can define your own lattice using the `LatticeBase` class. 
+You can define your own lattice using the `LatticeBase` class.
+
+The `MapLattice` class converts a value lattice (such as an instance of `LatticeBase`) into a lattice over `dict[str, LatticeType]` map states. Each key is tracked independently, with missing keys treated as the value lattice's `bottom()`. The `leq`, `join`, and `meet` methods are applied key-wise across the union of keys. This is useful for analyses that map variables (or labels) to lattice values.
 
 ## Dataflow
 
@@ -235,7 +236,4 @@ The `DataflowAnalysis` class requires a Lattice to implement the analysis on. Th
 - states_equal(t1, t2): Returns True if two states are equal in the lattice.
 
 The `ForwardDataflowAnalysis` class implements the forward dataflow analysis using the worklist algorithm with the `analyze` method. The output of the analysis is an instance of the `DataflowResult` class which contains the `in_states`, `out_states`, and the `iterations`.
-
-The `MapForwardDataflowAnalysis` is a helper instance of `ForwardDataflowAnalysis` for states that use a `dict[str, LatticeType]` type for analysis. 
-
 

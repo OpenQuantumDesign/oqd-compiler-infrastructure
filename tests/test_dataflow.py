@@ -34,8 +34,6 @@ class SimpleGraph:
 
 
 class SetReachabilityLattice(Lattice[set[str]]):
-    def top(self) -> set[str]:
-        return {"ENTRY", "entry", "mid", "exit"}
 
     def bottom(self) -> set[str]:
         return set()
@@ -52,18 +50,6 @@ class SetReachabilityLattice(Lattice[set[str]]):
 
 class Reachability(ForwardDataflowAnalysis[str, set[str]]):
     lattice = SetReachabilityLattice()
-
-    def bottom(self) -> set[str]:
-        return set()
-
-    def boundary_state(self, node: str) -> set[str]:
-        return {"ENTRY"} if node == "entry" else set()
-
-    def merge(self, states):
-        out = set()
-        for s in states:
-            out |= s
-        return out
 
     def transfer(self, node: str, state_in: set[str]) -> set[str]:
         return state_in | {node}

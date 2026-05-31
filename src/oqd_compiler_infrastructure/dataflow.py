@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass
-from typing import Generic, Iterable, TypeVar, Protocol
+from typing import ClassVar, Generic, Iterable, TypeVar, Protocol
 from oqd_compiler_infrastructure.lattice import Lattice, LatticeType
 
 NodeType = TypeVar("NodeType")
@@ -58,7 +58,7 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeType]):
     Base class that defines what every dataflow analysis must implement.
     """
 
-    lattice = Lattice
+    lattice: ClassVar[Lattice[LatticeType]]
 
     @abstractmethod
     def transfer(self, node: NodeType, state_in: LatticeType) -> LatticeType:
@@ -136,45 +136,3 @@ class ForwardDataflowAnalysis(
             in_states=in_states, out_states=out_states, iterations=iterations
         )
 
-
-class MapForwardDataflowAnalysis(
-    ForwardDataflowAnalysis[NodeType, dict[str, LatticeType]],
-    Generic[NodeType, LatticeType],
-):
-    """
-    Helper instance of ForwardDataflowAnalysis for states that need a dict Type.
-    """
-
-    def bottom(self) -> dict[str, LatticeType]:
-        return {}
-
-    def merge(self, states: Iterable[dict[str, LatticeType]]) -> dict[str, LatticeType]:
-        states_list = list(states)
-        if not states_list:
-            return {}
-
-        bottom = self.lattice.bottom()
-        all_keys = set().union(*(state.keys() for state in states_list))
-
-        merged = {}
-        for name in all_keys:
-            value = bottom
-            for state in states_list:
-                value = self.lattice.join(value, state.get(name, bottom))
-            merged[name] = value
-
-        return merged
-
-    def states_equal(
-        self, t1: dict[str, LatticeType], t2: dict[str, LatticeType]
-    ) -> bool:
-        bottom = self.lattice.bottom()
-        all_keys = set(t1.keys()).union(t2.keys())
-
-        for key in all_keys:
-            v1 = t1.get(key, bottom)
-            v2 = t2.get(key, bottom)
-            if not (self.lattice.leq(v1, v2) and self.lattice.leq(v2, v1)):
-                return False
-
-        return True
