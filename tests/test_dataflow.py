@@ -14,7 +14,7 @@
 
 from dataclasses import dataclass
 from typing import Iterable
-from oqd_compiler_infrastructure import ForwardDataflowAnalysis
+from oqd_compiler_infrastructure import ForwardDataflowAnalysis, Lattice
 
 
 @dataclass
@@ -32,19 +32,25 @@ class SimpleGraph:
     def successors(self, node: str) -> Iterable[str]:
         return self.graph_succs.get(node, [])
 
-class Reachability(ForwardDataflowAnalysis[str, set[str]]):
+
+class SetReachabilityLattice(Lattice[set[str]]):
+
     def bottom(self) -> set[str]:
         return set()
 
-    def boundary_state(self, node: str) -> set[str]:
-        return {"ENTRY"} if node == "entry" else set()
+    def leq(self, t1: set[str], t2: set[str]) -> bool:
+        return t1 <= t2
 
-    def merge(self, states):
-        out = set()
-        for s in states:
-            out |= s
-        return out
-        
+    def join(self, t1: set[str], t2: set[str]) -> set[str]:
+        return t1 | t2
+
+    def meet(self, t1: set[str], t2: set[str]) -> set[str]:
+        return t1 & t2
+
+
+class Reachability(ForwardDataflowAnalysis[str, set[str]]):
+    lattice = SetReachabilityLattice()
+
     def transfer(self, node: str, state_in: set[str]) -> set[str]:
         return state_in | {node}
 
@@ -52,16 +58,14 @@ class Reachability(ForwardDataflowAnalysis[str, set[str]]):
 class TestForwardDataflowAnalysis:
     def test_reachability(self):
         graph = SimpleGraph(
-        graph_nodes=["entry", "mid", "exit"],
-        graph_preds={"mid": ["entry"], "exit": ["mid"]},
-        graph_succs={"entry": ["mid"], "mid": ["exit"]},
+            graph_nodes=["entry", "mid", "exit"],
+            graph_preds={"mid": ["entry"], "exit": ["mid"]},
+            graph_succs={"entry": ["mid"], "mid": ["exit"]},
         )
         result = Reachability().analyze(graph)
 
-        assert result.in_states["entry"] == {"ENTRY"}
-        assert result.out_states["entry"] == {"ENTRY", "entry"}
-        assert result.out_states["mid"] == {"ENTRY", "entry", "mid"}
-        assert result.out_states["exit"] == {"ENTRY", "entry", "mid", "exit"}
+        assert result.in_states["entry"] == set()
+        assert result.out_states["entry"] == {"entry"}
+        assert result.out_states["mid"] == {"entry", "mid"}
+        assert result.out_states["exit"] == {"entry", "mid", "exit"}
         assert result.iterations >= 3
-
-
