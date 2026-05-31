@@ -51,8 +51,8 @@ class SetReachabilityLattice(Lattice[set[str]]):
 
 
 class Reachability(ForwardDataflowAnalysis[str, set[str]]):
-    def __init__(self):
-        super().__init__(SetReachabilityLattice())
+    lattice = SetReachabilityLattice()
+
     def bottom(self) -> set[str]:
         return set()
 
@@ -64,7 +64,7 @@ class Reachability(ForwardDataflowAnalysis[str, set[str]]):
         for s in states:
             out |= s
         return out
-        
+
     def transfer(self, node: str, state_in: set[str]) -> set[str]:
         return state_in | {node}
 
@@ -72,9 +72,9 @@ class Reachability(ForwardDataflowAnalysis[str, set[str]]):
 class TestForwardDataflowAnalysis:
     def test_reachability(self):
         graph = SimpleGraph(
-        graph_nodes=["entry", "mid", "exit"],
-        graph_preds={"mid": ["entry"], "exit": ["mid"]},
-        graph_succs={"entry": ["mid"], "mid": ["exit"]},
+            graph_nodes=["entry", "mid", "exit"],
+            graph_preds={"mid": ["entry"], "exit": ["mid"]},
+            graph_succs={"entry": ["mid"], "mid": ["exit"]},
         )
         result = Reachability().analyze(graph)
 
@@ -83,5 +83,3 @@ class TestForwardDataflowAnalysis:
         assert result.out_states["mid"] == {"entry", "mid"}
         assert result.out_states["exit"] == {"entry", "mid", "exit"}
         assert result.iterations >= 3
-
-
