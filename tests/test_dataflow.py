@@ -35,6 +35,9 @@ class SimpleGraph:
 
 class SetReachabilityLattice(Lattice[set[str]]):
 
+    def top(self) -> set[str]:
+        return set(self.graph_nodes)
+
     def bottom(self) -> set[str]:
         return set()
 

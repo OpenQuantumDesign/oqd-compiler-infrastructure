@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass
 from typing import ClassVar, Generic, Iterable, TypeVar, Protocol
-from oqd_compiler_infrastructure.lattice import Lattice, LatticeType
+from oqd_compiler_infrastructure.lattice import Lattice, LatticeValue
 
 NodeType = TypeVar("NodeType")
 
@@ -43,57 +43,49 @@ class GraphProtocol(Protocol[NodeType]):
 
 
 @dataclass(frozen=True)
-class DataflowResult(Generic[NodeType, LatticeType]):
+class DataflowResult(Generic[NodeType, LatticeValue]):
     """
     The result of a dataflow analysis.
     """
 
-    in_states: dict[NodeType, LatticeType]
-    out_states: dict[NodeType, LatticeType]
+    in_states: dict[NodeType, LatticeValue]
+    out_states: dict[NodeType, LatticeValue]
     iterations: int
 
 
-class DataflowAnalysis(ABC, Generic[NodeType, LatticeType]):
+class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
     """
     Base class that defines what every dataflow analysis must implement.
     """
 
-    lattice: ClassVar[Lattice[LatticeType]]
+    lattice: ClassVar[Lattice[LatticeValue]]
 
     @abstractmethod
-    def transfer(self, node: NodeType, state_in: LatticeType) -> LatticeType:
+    def transfer(self, node: NodeType, state_in: LatticeValue) -> LatticeValue:
         """Returns the state of a given node after transfer."""
         pass
 
-    def bottom(self) -> LatticeType:
-        """Returns the default starting state for all nodes."""
-        return self.lattice.bottom()
-
-    def merge(self, states: Iterable[LatticeType]) -> LatticeType:
-        """Joins incoming states using the lattice's join operation."""
-        states_list = list(states)
-        if not states_list:
-            return self.bottom()
-        merged = states_list[0]
-        for state in states_list[1:]:
-            merged = self.lattice.join(merged, state)
-        return merged
-
-    def states_equal(self, t1: LatticeType, t2: LatticeType) -> bool:
-        """Returns True if two states are equal in the lattice."""
-        return self.lattice.leq(t1, t2) and self.lattice.leq(t2, t1)
-
 
 class ForwardDataflowAnalysis(
-    DataflowAnalysis[NodeType, LatticeType], Generic[NodeType, LatticeType]
+    DataflowAnalysis[NodeType, LatticeValue], Generic[NodeType, LatticeValue]
 ):
     """
     Forward dataflow analysis framework.
     """
 
+    def merge(self, states: Iterable[LatticeValue]) -> LatticeValue:
+        """Joins incoming states using the lattice's join operation."""
+        states_list = list(states)
+        if not states_list:
+            return self.lattice.bottom()
+        merged = states_list[0]
+        for state in states_list[1:]:
+            merged = self.lattice.join(merged, state)
+        return merged
+
     def analyze(
         self, graph: GraphProtocol[NodeType]
-    ) -> DataflowResult[NodeType, LatticeType]:
+    ) -> DataflowResult[NodeType, LatticeValue]:
         """
         Runs the worklist algorithm and returns the result of the dataflow analysis.
         Steps:
@@ -104,8 +96,8 @@ class ForwardDataflowAnalysis(
         - Returns final states and iteration count.
         """
         nodes = list(graph.nodes())
-        in_states = {node: self.bottom() for node in nodes}
-        out_states = {node: self.bottom() for node in nodes}
+        in_states = {node: self.lattice.bottom() for node in nodes}
+        out_states = {node: self.lattice.bottom() for node in nodes}
 
         worklist = deque(nodes)
         queued = set(nodes)
@@ -119,11 +111,11 @@ class ForwardDataflowAnalysis(
             pred_states = [out_states[pred] for pred in graph.predecessors(node)]
             merged_input = self.merge(pred_states)
 
-            if not self.states_equal(in_states[node], merged_input):
+            if not self.lattice.equal(in_states[node], merged_input):
                 in_states[node] = merged_input
 
             next_out = self.transfer(node, merged_input)
-            if self.states_equal(out_states[node], next_out):
+            if self.lattice.equal(out_states[node], next_out):
                 continue
 
             out_states[node] = next_out
