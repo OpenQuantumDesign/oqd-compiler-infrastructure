@@ -17,10 +17,11 @@ from .dataflow import (
     DataflowAnalysis,
     DataflowResult,
     ForwardDataflowAnalysis,
+    BackwardDataflowAnalysis,
     GraphProtocol,
 )
 from .interface import TypeReflectBaseModel, VisitableBaseModel
-from .lattice import Lattice, LatticeBase, LatticeBottom, LatticeTop
+from .lattice import Lattice, LatticeBase, LatticeBottom, LatticeTop, PowersetLattice, maplattice
 from .rewriter import Chain, FixedPoint, RewriterBase
 from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
 from .walk import In, Level, Post, Pre, WalkBase
@@ -32,11 +33,14 @@ __all__ = [
     "DataflowAnalysis",
     "DataflowResult",
     "ForwardDataflowAnalysis",
+    "BackwardDataflowAnalysis",
     "GraphProtocol",
     "Lattice",
     "LatticeBase",
     "LatticeBottom",
     "LatticeTop",
+    "PowersetLattice",
+    "maplattice",
     "type_name",
     "RewriteRule",
     "ConversionRule",

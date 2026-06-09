@@ -204,8 +204,33 @@ The fixed point rewriter transforms a pass by iteratively applying the pass till
 ///
 ///
 
-## Dataflow 
-`dataflow` defines a reusable forward dataflow analysis framework.
-
 ## Lattice
-`lattice` defines ordering and merge semantics used by analysis states. Use `LatticeBase` to model the state domain, then use `ForwardDataflowAnalysis` to run transfer and merge over a graph. This keeps transfer logic in the analysis class and ordering logic in the lattice class.
+
+The `Lattice` class in [`lattice.py`](../../src/oqd_compiler_infrastructure/lattice.py) defines a generic lattice interface with all the methods it requires. The following methods are defined:
+- top(): Returns the top element of the lattice.
+- bottom(): Returns the bottom element of the lattice.
+- leq(): Returns True if `t1 <= t2` in the lattice.
+- join(): Returns the least upper bound of `t1` and `t2`.
+- meet(): Returns the greatest lower bound of `t1` and `t2`.
+- equal(): Returns True if `t1` and `t2` are equal in the lattice.
+
+These methods allow analysis to be done on a concrete instance of the lattice. 
+
+The `LatticeBase` class defines a simple concrete implementation of a `Lattice`. It stores a dictionary that maps each node of the lattice to its immediate parent(s). It defines `LatticeTop` as the top element, and `LatticeBottom` as the bottom element of the lattice. This class defines the following helper methods:
+- is_class_node(t): Returns True if `t` is a valid lattice node.
+- atomic_ancestors(t): Returns the atomic ancestors of a given node.
+
+These helper methods are used in the concrete implementation of the lattice operation methods: `leq`, `join`, and `meet`.
+
+You can define your own lattice using the `LatticeBase` class.
+
+The `maplattice` function builds a lattice over `dict[str, LatticeValue]` map states from a value lattice class (such as `LatticeBase`). It returns a new lattice class, which you instantiate to use: `maplattice(MyLattice)()`. The function implments `leq`, `join`, and `meet` methods for analyses that map variables (or labels) to lattice values.
+
+## Dataflow
+
+The `GraphProtocol` class in [`dataflow.py`](../../src/oqd_compiler_infrastructure/dataflow.py) defines a generic Graph Protocol interface that provides the nodes in the graph, the predecessors of a given node, and the successors of a given node. This protocol can be applied on any graph object for analysis: control flow graphs, dependency graphs, IR graphs, etc.
+
+The `DataflowAnalysis` class requires a Lattice to implement the analysis on. This class provides a dataflow analysis framework that can be used to implement a specific dataflow analysis. The `transfer` method returns the state of a given node after transfer.
+
+The `ForwardDataflowAnalysis` class implements the forward dataflow analysis using the worklist algorithm with the `analyze` method. `analyze` takes in a merge function as a parameter, which can be one of the merge methods defined in `DataflowAnalysis`: `merge_union` or `merge_intersection`. The output of the analysis is an instance of the `DataflowResult` class which contains the `in_states`, `out_states`, and the `iterations`.
+
