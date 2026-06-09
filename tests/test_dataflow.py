@@ -14,7 +14,7 @@
 
 from dataclasses import dataclass
 from typing import Iterable
-from oqd_compiler_infrastructure import ForwardDataflowAnalysis, Lattice
+from oqd_compiler_infrastructure import ForwardDataflowAnalysis, BackwardDataflowAnalysis, Lattice
 
 
 @dataclass
@@ -65,10 +65,33 @@ class TestForwardDataflowAnalysis:
             graph_preds={"mid": ["entry"], "exit": ["mid"]},
             graph_succs={"entry": ["mid"], "mid": ["exit"]},
         )
-        result = Reachability().analyze(graph)
+        analysis = Reachability()
+        result = analysis.analyze(graph, analysis.merge_union)
 
         assert result.in_states["entry"] == set()
         assert result.out_states["entry"] == {"entry"}
         assert result.out_states["mid"] == {"entry", "mid"}
         assert result.out_states["exit"] == {"entry", "mid", "exit"}
+        assert result.iterations >= 3
+
+
+class BackwardReachability(BackwardDataflowAnalysis[str, set[str]]):
+    lattice = SetReachabilityLattice()
+    def transfer(self, node: str, state_in: set[str]) -> set[str]:
+        return state_in | {node}
+
+
+class TestBackwardDataflowAnalysis:
+    def test_reachability(self):
+        graph = SimpleGraph(
+            graph_nodes=["entry", "mid", "exit"],
+            graph_preds={"mid": ["entry"], "exit": ["mid"]},
+            graph_succs={"entry": ["mid"], "mid": ["exit"]},
+        )
+        analysis = BackwardReachability()
+        result = analysis.analyze(graph, analysis.merge_union)
+        assert result.out_states["exit"] == set()
+        assert result.in_states["exit"] == {"exit"}
+        assert result.in_states["mid"] == {"mid", "exit"}
+        assert result.in_states["entry"] == {"entry", "mid", "exit"}
         assert result.iterations >= 3

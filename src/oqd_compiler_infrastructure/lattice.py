@@ -225,3 +225,32 @@ def maplattice(lattice: Type[Lattice]) -> Type[Lattice]:
     cls = types.new_class(name, (Lattice[Dict[str, LatticeValue]],), None, update_ns)
     return cls
 
+
+PowersetValue = set | type[LatticeTop]
+
+class PowersetLattice(Lattice[PowersetValue]):
+    def top(self) -> PowersetValue:
+        return LatticeTop
+    
+    def bottom(self) -> PowersetValue:
+        return set()
+    
+    def leq(self, t1: PowersetValue, t2: PowersetValue) -> bool:
+        if t2 is LatticeTop:
+            return True
+        if t1 is LatticeTop:
+            return False
+        return t1 <= t2
+    
+    def join(self, t1: PowersetValue, t2: PowersetValue) -> PowersetValue:
+        if t1 is LatticeTop or t2 is LatticeTop:
+            return LatticeTop
+        return t1 | t2
+    
+    def meet(self, t1: PowersetValue, t2: PowersetValue) -> PowersetValue:
+        if t1 is LatticeTop:
+            return t2
+        if t2 is LatticeTop:
+            return t1
+        return t1 & t2
+

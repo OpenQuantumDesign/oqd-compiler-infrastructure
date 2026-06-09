@@ -232,5 +232,5 @@ The `GraphProtocol` class in [`dataflow.py`](../../src/oqd_compiler_infrastructu
 
 The `DataflowAnalysis` class requires a Lattice to implement the analysis on. This class provides a dataflow analysis framework that can be used to implement a specific dataflow analysis. The `transfer` method returns the state of a given node after transfer.
 
-The `ForwardDataflowAnalysis` class implements the forward dataflow analysis using the worklist algorithm with the `analyze` method. The `merge` method joins incoming states using the lattice's join operation. The output of the analysis is an instance of the `DataflowResult` class which contains the `in_states`, `out_states`, and the `iterations`.
+The `ForwardDataflowAnalysis` class implements the forward dataflow analysis using the worklist algorithm with the `analyze` method. `analyze` takes in a merge function as a parameter, which can be one of the merge methods defined in `DataflowAnalysis`: `merge_union` or `merge_intersection`. The output of the analysis is an instance of the `DataflowResult` class which contains the `in_states`, `out_states`, and the `iterations`.
 
