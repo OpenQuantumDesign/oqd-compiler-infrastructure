@@ -22,6 +22,7 @@
 , mkdocs-material
 , mkdocstrings-python
 , mdx-truly-sane-lists
+, setuptools
 }:
 
 buildPythonPackage rec {
@@ -46,6 +47,7 @@ buildPythonPackage rec {
     mkdocstrings
     mkdocs-material
     mkdocstrings-python
+    setuptools
   ];
 
   pythonImportsCheck = [ "oqd_compiler_infrastructure" ];
@@ -53,7 +55,7 @@ buildPythonPackage rec {
   meta = with lib; {
     description = "OpenQuantum Design Compiler Infrastructure";
     homepage = "https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure";
-    license = licenses.apache20;
+    license = licenses.asl20;
     maintainers = with maintainers; [ ];
   };
 }
