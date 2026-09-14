@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires      = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 
@@ -27,10 +27,7 @@ classifiers = [
 ]
 
 
-dependencies = [
-    "ast-comments>=1.2.3",
-    "pydantic>=2, <3",
-]
+dependencies = ["ast-comments>=1.2.3", "pydantic>=2, <3"]
 
 [project.optional-dependencies]
 docs = [
@@ -43,11 +40,14 @@ docs = [
 tests = ["pytest"]
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where   = ["src"]
 include = ["oqd_compiler_infrastructure*"]
 
+[tool.ruff.lint]
+select  = ["E4", "E7", "E9", "F", "I"]
+fixable = ["ALL"]
 
 [project.urls]
-Homepage = "https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure"
+Homepage   = "https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure"
 Repository = "https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure.git"
-Issues = "https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure/issues"
+Issues     = "https://github.com/OpenQuantumDesign/oqd-compiler-infrastructure/issues"
