@@ -21,7 +21,14 @@ from .dataflow import (
     GraphProtocol,
 )
 from .interface import TypeReflectBaseModel, VisitableBaseModel
-from .lattice import Lattice, LatticeBase, LatticeBottom, LatticeTop, PowersetLattice, maplattice
+from .lattice import (
+    Lattice,
+    LatticeBase,
+    LatticeBottom,
+    LatticeTop,
+    PowersetLattice,
+    maplattice,
+)
 from .rewriter import Chain, FixedPoint, RewriterBase
 from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
 from .walk import In, Level, Post, Pre, WalkBase

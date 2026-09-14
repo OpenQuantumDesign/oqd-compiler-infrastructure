@@ -12,14 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+########################################################################################
+
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass
 from typing import ClassVar, Generic, Iterable, TypeVar, Protocol, Callable
-from oqd_compiler_infrastructure.lattice import Lattice, LatticeValue
+from .lattice import Lattice, LatticeValue
+
+########################################################################################
 
 NodeType = TypeVar("NodeType")
+
+
+########################################################################################
 
 
 class GraphProtocol(Protocol[NodeType]):
@@ -64,21 +71,21 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
     def transfer(self, node: NodeType, state_in: LatticeValue) -> LatticeValue:
         """Returns the state of a given node after transfer."""
         pass
-    
+
     @abstractmethod
     def sources(
         self, graph: GraphProtocol[NodeType], node: NodeType
     ) -> Iterable[NodeType]:
         """Neighbors whose results flow into `node`."""
         pass
-    
+
     @abstractmethod
     def targets(
         self, graph: GraphProtocol[NodeType], node: NodeType
     ) -> Iterable[NodeType]:
         """Neighbors to reschedule when `node`'s result changes."""
         pass
-    
+
     @abstractmethod
     def result(
         self,
@@ -92,7 +99,7 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
     def init_state(self) -> LatticeValue:
         """Initializes the lattice with the lattice's bottom operation."""
         return self.lattice.bottom()
-    
+
     def merge_union(self, states: Iterable[LatticeValue]) -> LatticeValue:
         """Joins incoming states using the lattice's join operation."""
         states_list = list(states)
@@ -102,7 +109,7 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
         for state in states_list[1:]:
             merged = self.lattice.join(merged, state)
         return merged
-    
+
     def merge_intersection(self, states: Iterable[LatticeValue]) -> LatticeValue:
         """Meets incoming states using the lattice's meet operation."""
         states_list = list(states)
@@ -112,7 +119,7 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
         for state in states_list[1:]:
             merged = self.lattice.meet(merged, state)
         return merged
-    
+
     def analyze(
         self,
         graph: GraphProtocol[NodeType],
@@ -139,7 +146,7 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
             node = worklist.popleft()
             queued.discard(node)
             iterations += 1
-            
+
             srcs = list(self.sources(graph, node))
             if srcs:
                 merged_input = merge_function(result[n] for n in srcs)
@@ -152,7 +159,7 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
             next_result = self.transfer(node, merged_input)
             if self.lattice.equal(result[node], next_result):
                 continue
-            
+
             result[node] = next_result
             for target in self.targets(graph, node):
                 if target not in queued:
@@ -168,16 +175,17 @@ class ForwardDataflowAnalysis(
     """
     Forward dataflow analysis framework.
     """
+
     def sources(
         self, graph: GraphProtocol[NodeType], node: NodeType
     ) -> Iterable[NodeType]:
         return graph.predecessors(node)
-    
+
     def targets(
         self, graph: GraphProtocol[NodeType], node: NodeType
     ) -> Iterable[NodeType]:
         return graph.successors(node)
-    
+
     def result(
         self,
         boundary: dict[NodeType, LatticeValue],
@@ -195,17 +203,17 @@ class BackwardDataflowAnalysis(
     """
     Backward dataflow analysis framework.
     """
-    
+
     def sources(
         self, graph: GraphProtocol[NodeType], node: NodeType
     ) -> Iterable[NodeType]:
         return graph.successors(node)
-    
+
     def targets(
         self, graph: GraphProtocol[NodeType], node: NodeType
     ) -> Iterable[NodeType]:
         return graph.predecessors(node)
-    
+
     def result(
         self,
         boundary: dict[NodeType, LatticeValue],
@@ -215,4 +223,3 @@ class BackwardDataflowAnalysis(
         return DataflowResult(
             in_states=result, out_states=boundary, iterations=iterations
         )
-    
