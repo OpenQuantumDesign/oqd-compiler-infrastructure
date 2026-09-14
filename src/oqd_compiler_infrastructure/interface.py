@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Literal
+from typing import Generic, Iterable, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
@@ -46,3 +46,28 @@ class TypeReflectBaseModel(VisitableBaseModel):
         super().__init_subclass__(**kwargs)
         cls.__annotations__ = dict(class_=Literal[cls.__name__], **cls.__annotations__)
         setattr(cls, "class_", cls.__name__)
+
+
+########################################################################################
+
+NodeType = TypeVar("NodeType")
+
+
+class GraphProtocol(Generic[NodeType]):
+    """
+    Any object passed to `DataflowAnalysis.analyze` must provide this interface.
+    The protocol is intentionally minimal so it can adapt to Control Flow Graphs (CFGs),
+    dependency graphs, custom IR graphs, etc.
+    """
+
+    def nodes(self) -> Iterable[NodeType]:
+        """Returns all nodes in the graph."""
+        ...
+
+    def predecessors(self, node: NodeType) -> Iterable[NodeType]:
+        """Returns all predecessors of a given node."""
+        ...
+
+    def successors(self, node: NodeType) -> Iterable[NodeType]:
+        """Returns all successors of a given node."""
+        ...

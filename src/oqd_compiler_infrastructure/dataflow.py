@@ -15,38 +15,16 @@
 ########################################################################################
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass
-from typing import ClassVar, Generic, Iterable, TypeVar, Protocol, Callable
+from typing import Callable, ClassVar, Generic, Iterable
+
+from .interface import GraphProtocol, NodeType
 from .lattice import Lattice, LatticeValue
 
 ########################################################################################
-
-NodeType = TypeVar("NodeType")
-
-
-########################################################################################
-
-
-class GraphProtocol(Protocol[NodeType]):
-    """
-    Any object passed to `DataflowAnalysis.analyze` must provide this interface.
-    The protocol is intentionally minimal so it can adapt to Control Flow Graphs (CFGs),
-    dependency graphs, custom IR graphs, etc.
-    """
-
-    def nodes(self) -> Iterable[NodeType]:
-        """Returns all nodes in the graph."""
-        ...
-
-    def predecessors(self, node: NodeType) -> Iterable[NodeType]:
-        """Returns all predecessors of a given node."""
-        ...
-
-    def successors(self, node: NodeType) -> Iterable[NodeType]:
-        """Returns all successors of a given node."""
-        ...
 
 
 @dataclass(frozen=True)
