@@ -18,6 +18,7 @@ from collections.abc import MutableMapping
 from functools import reduce
 from typing import Dict, Iterable, List
 
+import graphviz
 from pydantic import Field
 
 from .interface import VisitableBaseModel
@@ -127,3 +128,52 @@ class CFGBlockAccumulator(RewriteRule):
             blocks.append(block.register_id)
             block = self.blocks[block.succs[0]]
         return blocks
+
+
+########################################################################################
+
+
+class CFGtoDot(RewriteRule):
+    def __init__(self, *, serialize=None, max_lines=5):
+        if serialize:
+            self.serialize = serialize
+        else:
+            self.serialize = lambda x: x.__repr__()
+
+        self.max_lines = max_lines
+
+    def map_CFG(self, model):
+        self.dot = graphviz.Digraph()
+
+        for block in model.blocks.values():
+            self(block)
+
+        return self.dot
+
+    def map_CFGBlock(self, model):
+
+        if model.edge_labels:
+            label = [f"Condition: {self(model.stmts[0])}"]
+        else:
+            label = [self(stmt) for stmt in model.stmts]
+
+        if len(label) > self.max_lines and self.max_lines >= 0:
+            label = label[: self.max_lines] + ["..."]
+
+        self.dot.node(
+            str(model.register_id),
+            f"{'Branch' if model.edge_labels else ''} Block #{model.register_id}\n{'-' * 24}\n"
+            + "\n".join(label),
+        )
+
+        for succ in model.succs:
+            self.dot.edge(str(model.register_id), str(succ))
+
+    def generic_map(self, model):
+        return f"{self.serialize(model)}"
+
+
+def cfg_to_dot(cfg: CFG, *, serialize=None, max_lines=5) -> graphviz.Digraph:
+    _cfg2dot = CFGtoDot(serialize=serialize, max_lines=max_lines)
+
+    return _cfg2dot(cfg)
