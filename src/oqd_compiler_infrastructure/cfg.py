@@ -14,16 +14,19 @@
 
 ########################################################################################
 
-from typing import List, Iterable
-from pydantic import Field
+from collections import MutableMapping
 from functools import reduce
+from typing import Dict, Iterable, List
+
+from pydantic import Field
+
 from .interface import VisitableBaseModel
 from .rule import RewriteRule
 
 ########################################################################################
 
 
-class Block(VisitableBaseModel):
+class CFGBlock(VisitableBaseModel):
     """Represents one control flow node with incoming / outgoing edges and metadata."""
 
     register_id: int
@@ -31,7 +34,7 @@ class Block(VisitableBaseModel):
     preds: List[int] = Field(default_factory=list)
     succs: List[int] = Field(default_factory=list)
     exit_nodes: List[int] = Field(default_factory=list)
-    edge_labels: dict[int, str] = Field(default_factory=dict)
+    edge_labels: Dict[int, str] = Field(default_factory=dict)
 
     def add_succ(self, succ: int, label: str | None = None) -> None:
         if succ not in self.succs:
@@ -48,38 +51,41 @@ class Block(VisitableBaseModel):
             self.add_pred(pred)
 
 
-class ControlFlowGraph(VisitableBaseModel):
+class CFG(VisitableBaseModel, MutableMapping[int, CFGBlock]):
     """Defines a Control Flow Graph (CFG) with the GraphProtocol required by DataflowAnalysis."""
 
-    blocks: dict[int, Block]
+    blocks: Dict[int, CFGBlock] = Field(default_factory=dict)
 
+    def __getitem__(self, idx):
+        return self.blocks[idx]
+
+    def __setitem__(self, idx, value):
+        self.blocks[idx] = value
+
+    def __delitem__(self, idx):
+        del self.blocks[idx]
+
+    def __iter__(self):
+        return self.blocks.__iter__()
+
+    def __len__(self):
+        return len(self.blocks)
+
+    @property
     def nodes(self) -> Iterable[int]:
-        return self.blocks.keys()
+        return self.keys()
 
     def predecessors(self, node: int) -> Iterable[int]:
-        return self.blocks[node].preds
+        return self[node].preds
 
     def successors(self, node: int) -> Iterable[int]:
-        return self.blocks[node].succs
-
-    def to_dict(self) -> dict:
-        return {
-            node_id: {
-                "register_id": block.register_id,
-                "stmts": [stmt.model_dump() for stmt in block.stmts],
-                "preds": block.preds,
-                "succs": block.succs,
-                "exit_nodes": block.exit_nodes,
-                "edge_labels": block.edge_labels,
-            }
-            for node_id, block in self.blocks.items()
-        }
+        return self[node].succs
 
 
 ########################################################################################
 
 
-class BlockAccumulator(RewriteRule):
+class CFGBlockAccumulator(RewriteRule):
     def __init__(self):
         self.blocks = {}
 
@@ -93,7 +99,7 @@ class BlockAccumulator(RewriteRule):
 
         return block1
 
-    def map_ControlFlowGraph(self, model: ControlFlowGraph):
+    def map_ControlFlowGraph(self, model: CFG):
         self.blocks = model.blocks
         accumulated_blocks = []
         for block in self.blocks.values():
@@ -110,9 +116,9 @@ class BlockAccumulator(RewriteRule):
         for acc in accumulated_blocks:
             reduce(self._accumulate, acc)
 
-        return ControlFlowGraph(blocks=self.blocks)
+        return CFG(blocks=self.blocks)
 
-    def map_Block(self, model: Block):
+    def map_Block(self, model: CFGBlock):
         block = model
         blocks = []
         while True:
