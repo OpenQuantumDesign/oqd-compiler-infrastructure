@@ -14,7 +14,7 @@
 
 ########################################################################################
 
-from collections import MutableMapping
+from collections.abc import MutableMapping
 from functools import reduce
 from typing import Dict, Iterable, List
 

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .base import PassBase
-from .cfg import Block, ControlFlowGraph
+from .cfg import CFG, CFGBlock
 from .dataflow import (
     BackwardDataflowAnalysis,
     DataflowAnalysis,
