@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Generic, Iterable, Literal, TypeVar
+from abc import abstractmethod
+from collections.abc import MutableMapping
+from typing import Iterable, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
@@ -50,24 +52,28 @@ class TypeReflectBaseModel(VisitableBaseModel):
 
 ########################################################################################
 
+LabelType = TypeVar("LabelType")
 NodeType = TypeVar("NodeType")
 
 
-class GraphProtocol(Generic[NodeType]):
+class GraphProtocol(MutableMapping[LabelType, NodeType]):
     """
     Any object passed to `DataflowAnalysis.analyze` must provide this interface.
     The protocol is intentionally minimal so it can adapt to Control Flow Graphs (CFGs),
     dependency graphs, custom IR graphs, etc.
     """
 
-    def nodes(self) -> Iterable[NodeType]:
+    @abstractmethod
+    def nodes(self) -> Iterable[LabelType]:
         """Returns all nodes in the graph."""
         ...
 
-    def predecessors(self, node: NodeType) -> Iterable[NodeType]:
+    @abstractmethod
+    def predecessors(self, node: LabelType) -> Iterable[LabelType]:
         """Returns all predecessors of a given node."""
         ...
 
-    def successors(self, node: NodeType) -> Iterable[NodeType]:
+    @abstractmethod
+    def successors(self, node: LabelType) -> Iterable[LabelType]:
         """Returns all successors of a given node."""
         ...

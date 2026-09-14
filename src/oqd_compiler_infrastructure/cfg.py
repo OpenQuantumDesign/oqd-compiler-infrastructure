@@ -56,7 +56,7 @@ class CFGBlock(VisitableBaseModel):
             self.add_pred(pred)
 
 
-class CFG(VisitableBaseModel, MutableMapping[int, CFGBlock], GraphProtocol[CFGBlock]):
+class CFG(VisitableBaseModel, GraphProtocol[int, CFGBlock]):
     """Defines a Control Flow Graph (CFG) with the GraphProtocol required by DataflowAnalysis."""
 
     blocks: Dict[int, CFGBlock] = Field(default_factory=dict)
@@ -76,15 +76,14 @@ class CFG(VisitableBaseModel, MutableMapping[int, CFGBlock], GraphProtocol[CFGBl
     def __len__(self):
         return len(self.blocks)
 
-    @property
-    def nodes(self) -> Iterable[CFGBlock]:
-        return self.values()
+    def nodes(self) -> Iterable[int]:
+        return self.keys()
 
-    def predecessors(self, node: CFGBlock) -> Iterable[CFGBlock]:
-        return [self[pred] for pred in self[node].preds]
+    def predecessors(self, node: int) -> Iterable[int]:
+        return self[node].preds
 
-    def successors(self, node: CFGBlock) -> Iterable[CFGBlock]:
-        return [self[succ] for succ in self[node].succs]
+    def successors(self, node: int) -> Iterable[int]:
+        return self[node].succs
 
 
 ########################################################################################

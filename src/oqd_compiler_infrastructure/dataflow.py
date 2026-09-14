@@ -112,7 +112,7 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
         - If a node output changes, schedules its `targets` again.
         - Returns final states and iteration count.
         """
-        nodes = list(graph.nodes)
+        nodes = list(graph.nodes())
         boundary = {node: self.init_state() for node in nodes}
         result = {node: self.init_state() for node in nodes}
 
