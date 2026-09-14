@@ -38,6 +38,9 @@ class CFGBlock(VisitableBaseModel):
     exit_nodes: List[int] = Field(default_factory=list)
     edge_labels: Dict[int, str] = Field(default_factory=dict)
 
+    def __hash__(self):
+        return hash(self.register_id)
+
     def add_succ(self, succ: int, label: str | None = None) -> None:
         if succ not in self.succs:
             self.succs.append(succ)
