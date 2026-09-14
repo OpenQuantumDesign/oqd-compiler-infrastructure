@@ -100,7 +100,7 @@ class CFGBlockAccumulator(RewriteRule):
 
         return block1
 
-    def map_ControlFlowGraph(self, model: CFG):
+    def map_CFG(self, model: CFG):
         self.blocks = model.blocks
         accumulated_blocks = []
         for block in self.blocks.values():
@@ -119,7 +119,7 @@ class CFGBlockAccumulator(RewriteRule):
 
         return CFG(blocks=self.blocks)
 
-    def map_Block(self, model: CFGBlock):
+    def map_CFGBlock(self, model: CFGBlock):
         block = model
         blocks = []
         while True:
