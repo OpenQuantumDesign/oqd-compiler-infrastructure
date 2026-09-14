@@ -71,7 +71,7 @@ class Lattice(ABC, Generic[LatticeValue], metaclass=Singleton):
     def meet(self, t1: LatticeValue, t2: LatticeValue) -> LatticeValue:
         """Returns the greatest lower bound of `t1` and `t2`."""
         pass
-    
+
     def equal(self, t1: LatticeValue, t2: LatticeValue) -> bool:
         """Returns True if two values are equal in the lattice."""
         return self.leq(t1, t2) and self.leq(t2, t1)
@@ -81,7 +81,7 @@ class LatticeBase(Lattice[LatticeValue]):
     """
     Concrete implementation of a lattice interface.
     """
-    
+
     def top(self) -> LatticeValue:
         """Returns the top element of the lattice."""
         return LatticeTop
@@ -228,29 +228,29 @@ def maplattice(lattice: Type[Lattice]) -> Type[Lattice]:
 
 PowersetValue = set | type[LatticeTop]
 
+
 class PowersetLattice(Lattice[PowersetValue]):
     def top(self) -> PowersetValue:
         return LatticeTop
-    
+
     def bottom(self) -> PowersetValue:
         return set()
-    
+
     def leq(self, t1: PowersetValue, t2: PowersetValue) -> bool:
         if t2 is LatticeTop:
             return True
         if t1 is LatticeTop:
             return False
         return t1 <= t2
-    
+
     def join(self, t1: PowersetValue, t2: PowersetValue) -> PowersetValue:
         if t1 is LatticeTop or t2 is LatticeTop:
             return LatticeTop
         return t1 | t2
-    
+
     def meet(self, t1: PowersetValue, t2: PowersetValue) -> PowersetValue:
         if t1 is LatticeTop:
             return t2
         if t2 is LatticeTop:
             return t1
         return t1 & t2
-

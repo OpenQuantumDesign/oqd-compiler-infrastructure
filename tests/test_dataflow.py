@@ -14,7 +14,12 @@
 
 from dataclasses import dataclass
 from typing import Iterable
-from oqd_compiler_infrastructure import ForwardDataflowAnalysis, BackwardDataflowAnalysis, Lattice
+
+from oqd_compiler_infrastructure import (
+    BackwardDataflowAnalysis,
+    ForwardDataflowAnalysis,
+    Lattice,
+)
 
 
 @dataclass
@@ -34,7 +39,6 @@ class SimpleGraph:
 
 
 class SetReachabilityLattice(Lattice[set[str]]):
-
     def top(self) -> set[str]:
         return set(self.graph_nodes)
 
@@ -77,6 +81,7 @@ class TestForwardDataflowAnalysis:
 
 class BackwardReachability(BackwardDataflowAnalysis[str, set[str]]):
     lattice = SetReachabilityLattice()
+
     def transfer(self, node: str, state_in: set[str]) -> set[str]:
         return state_in | {node}
 
