@@ -19,26 +19,26 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass
-from typing import Callable, ClassVar, Generic, Iterable
+from typing import Callable, ClassVar, Dict, Generic, Iterable
 
-from .interface import GraphProtocol, NodeType
+from .interface import GraphProtocol, NodeLabelType, NodeType
 from .lattice import Lattice, LatticeValue
 
 ########################################################################################
 
 
 @dataclass(frozen=True)
-class DataflowResult(Generic[NodeType, LatticeValue]):
+class DataflowResult(Generic[NodeLabelType, LatticeValue]):
     """
     The result of a dataflow analysis.
     """
 
-    in_states: dict[NodeType, LatticeValue]
-    out_states: dict[NodeType, LatticeValue]
+    in_states: Dict[NodeLabelType, LatticeValue]
+    out_states: Dict[NodeLabelType, LatticeValue]
     iterations: int
 
 
-class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
+class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
     """
     Base class that defines what every dataflow analysis must implement.
     """
@@ -46,31 +46,31 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
     lattice: ClassVar[Lattice[LatticeValue]]
 
     @abstractmethod
-    def transfer(self, node: NodeType, state_in: LatticeValue) -> LatticeValue:
+    def transfer(self, node: NodeLabelType, state_in: LatticeValue) -> LatticeValue:
         """Returns the state of a given node after transfer."""
         pass
 
     @abstractmethod
     def sources(
-        self, graph: GraphProtocol[NodeType], node: NodeType
-    ) -> Iterable[NodeType]:
+        self, graph: GraphProtocol[NodeLabelType, NodeType], node: NodeLabelType
+    ) -> Iterable[NodeLabelType]:
         """Neighbors whose results flow into `node`."""
         pass
 
     @abstractmethod
     def targets(
-        self, graph: GraphProtocol[NodeType], node: NodeType
-    ) -> Iterable[NodeType]:
+        self, graph: GraphProtocol[NodeLabelType, NodeType], node: NodeLabelType
+    ) -> Iterable[NodeLabelType]:
         """Neighbors to reschedule when `node`'s result changes."""
         pass
 
     @abstractmethod
     def result(
         self,
-        boundary: dict[NodeType, LatticeValue],
-        result: dict[NodeType, LatticeValue],
+        boundary: Dict[NodeLabelType, LatticeValue],
+        result: Dict[NodeLabelType, LatticeValue],
         iterations: int,
-    ) -> DataflowResult[NodeType, LatticeValue]:
+    ) -> DataflowResult[NodeLabelType, LatticeValue]:
         """Maps boundary/result states onto in/out states."""
         pass
 
@@ -100,9 +100,9 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
 
     def analyze(
         self,
-        graph: GraphProtocol[NodeType],
+        graph: GraphProtocol[NodeLabelType, NodeType],
         merge_function: Callable[[Iterable[LatticeValue]], LatticeValue],
-    ) -> DataflowResult[NodeType, LatticeValue]:
+    ) -> DataflowResult[NodeLabelType, LatticeValue]:
         """
         Runs the worklist algorithm and returns the result of the dataflow analysis.
         Steps:
@@ -117,12 +117,10 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
         result = {node: self.init_state() for node in nodes}
 
         worklist = deque(nodes)
-        queued = set(nodes)
         iterations = 0
 
         while worklist:
             node = worklist.popleft()
-            queued.discard(node)
             iterations += 1
 
             srcs = list(self.sources(graph, node))
@@ -140,64 +138,59 @@ class DataflowAnalysis(ABC, Generic[NodeType, LatticeValue]):
 
             result[node] = next_result
             for target in self.targets(graph, node):
-                if target not in queued:
+                if target not in worklist:
                     worklist.append(target)
-                    queued.add(target)
 
         return self.result(boundary, result, iterations)
 
 
-class ForwardDataflowAnalysis(
-    DataflowAnalysis[NodeType, LatticeValue], Generic[NodeType, LatticeValue]
-):
+class ForwardDataflowAnalysis(DataflowAnalysis[NodeLabelType, NodeType, LatticeValue]):
     """
     Forward dataflow analysis framework.
     """
 
     def sources(
-        self, graph: GraphProtocol[NodeType], node: NodeType
-    ) -> Iterable[NodeType]:
+        self, graph: GraphProtocol[NodeLabelType, NodeType], node: NodeLabelType
+    ) -> Iterable[NodeLabelType]:
         return graph.predecessors(node)
 
     def targets(
-        self, graph: GraphProtocol[NodeType], node: NodeType
-    ) -> Iterable[NodeType]:
+        self, graph: GraphProtocol[NodeLabelType, NodeType], node: NodeLabelType
+    ) -> Iterable[NodeLabelType]:
         return graph.successors(node)
 
     def result(
         self,
-        boundary: dict[NodeType, LatticeValue],
-        result: dict[NodeType, LatticeValue],
+        boundary: Dict[NodeLabelType, LatticeValue],
+        result: Dict[NodeLabelType, LatticeValue],
         iterations: int,
-    ) -> DataflowResult[NodeType, LatticeValue]:
+    ) -> DataflowResult[NodeLabelType, LatticeValue]:
         return DataflowResult(
             in_states=boundary, out_states=result, iterations=iterations
         )
 
 
-class BackwardDataflowAnalysis(
-    DataflowAnalysis[NodeType, LatticeValue], Generic[NodeType, LatticeValue]
-):
+class BackwardDataflowAnalysis(DataflowAnalysis[NodeLabelType, NodeType, LatticeValue]):
     """
     Backward dataflow analysis framework.
     """
 
     def sources(
-        self, graph: GraphProtocol[NodeType], node: NodeType
-    ) -> Iterable[NodeType]:
+        self, graph: GraphProtocol[NodeLabelType, NodeType], node: NodeLabelType
+    ) -> Iterable[NodeLabelType]:
         return graph.successors(node)
 
     def targets(
-        self, graph: GraphProtocol[NodeType], node: NodeType
-    ) -> Iterable[NodeType]:
+        self, graph: GraphProtocol[NodeLabelType, NodeType], node: NodeLabelType
+    ) -> Iterable[NodeLabelType]:
         return graph.predecessors(node)
 
     def result(
         self,
-        boundary: dict[NodeType, LatticeValue],
-        result: dict[NodeType, LatticeValue],
+        boundary: Dict[NodeLabelType, LatticeValue],
+        result: Dict[NodeLabelType, LatticeValue],
         iterations: int,
-    ) -> DataflowResult[NodeType, LatticeValue]:
+    ) -> DataflowResult[NodeLabelType, LatticeValue]:
         return DataflowResult(
             in_states=result, out_states=boundary, iterations=iterations
         )
