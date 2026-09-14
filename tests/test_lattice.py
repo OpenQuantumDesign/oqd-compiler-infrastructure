@@ -13,23 +13,33 @@
 # limitations under the License.
 
 import pytest
-from oqd_compiler_infrastructure import maplattice, LatticeBase, LatticeBottom, LatticeTop
+
+from oqd_compiler_infrastructure import (
+    LatticeBase,
+    LatticeBottom,
+    LatticeTop,
+    maplattice,
+)
+
 
 class A(LatticeTop):
     pass
 
+
 class B(A):
     pass
 
+
 class C(A):
     pass
+
 
 class TestLatticeBase:
     @pytest.fixture
     def lattice(self):
         lattice_obj = LatticeBase()
         return lattice_obj
-    
+
     def test_leq(self, lattice):
         assert lattice.leq(A, LatticeTop)
         assert lattice.leq(B, A)
@@ -47,23 +57,22 @@ class Testmaplattice:
     @pytest.fixture
     def map_lattice(self):
         return maplattice(LatticeBase)()
-        
+
     def test_bottom(self, map_lattice):
         assert map_lattice.bottom() == LatticeBottom
-    
+
     def test_leq_with_missing_keys(self, map_lattice):
         left = {"x": B}
         right = {"x": A, "y": C}
         assert map_lattice.leq(left, right)
         assert not map_lattice.leq(right, left)
-    
+
     def test_join(self, map_lattice):
         left = {"x": B}
         right = {"x": C, "y": C}
         assert map_lattice.join(left, right) == {"x": A, "y": C}
-    
+
     def test_meet(self, map_lattice):
         left = {"x": B, "y": C}
         right = {"x": A}
         assert map_lattice.meet(left, right) == {"x": B, "y": LatticeBottom}
-

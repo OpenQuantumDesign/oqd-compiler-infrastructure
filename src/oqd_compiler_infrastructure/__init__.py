@@ -13,15 +13,23 @@
 # limitations under the License.
 
 from .base import PassBase
+from .cfg import CFG, CFGBlock, CFGBlockAccumulator, cfg_to_dot
 from .dataflow import (
+    BackwardDataflowAnalysis,
     DataflowAnalysis,
     DataflowResult,
     ForwardDataflowAnalysis,
-    BackwardDataflowAnalysis,
     GraphProtocol,
 )
 from .interface import TypeReflectBaseModel, VisitableBaseModel
-from .lattice import Lattice, LatticeBase, LatticeBottom, LatticeTop, PowersetLattice, maplattice
+from .lattice import (
+    Lattice,
+    LatticeBase,
+    LatticeBottom,
+    LatticeTop,
+    PowersetLattice,
+    maplattice,
+)
 from .rewriter import Chain, FixedPoint, RewriterBase
 from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
 from .walk import In, Level, Post, Pre, WalkBase
@@ -54,4 +62,8 @@ __all__ = [
     "Chain",
     "FixedPoint",
     "RewriterBase",
+    "CFG",
+    "CFGBlock",
+    "cfg_to_dot",
+    "CFGBlockAccumulator",
 ]

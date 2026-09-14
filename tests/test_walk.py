@@ -485,6 +485,7 @@ def test_in_list():
     printer(inp)
     assert printer.children[0].string == "\n0: a\n1: ['a', 'b']\n2: b"
 
+
 def test_in_dict():
     "Test of In Walk on a dict"
     inp = {"a": "a", "b": "b"}
@@ -494,6 +495,7 @@ def test_in_dict():
     printer(inp)
     assert printer.children[0].string == "\n0: a\n1: {'a': 'a', 'b': 'b'}\n2: b"
 
+
 def test_in_VisitableBaseModel():
     "Test of In Walk on a VisitableBaseModel"
     inp = X(a="a", b="b")
@@ -502,6 +504,7 @@ def test_in_VisitableBaseModel():
 
     printer(inp)
     assert printer.children[0].string == "\n0: a\n1: a='a' b='b'\n2: b"
+
 
 def test_in_nested_list():
     "Test of In Walk on a nested list"
@@ -515,6 +518,7 @@ def test_in_nested_list():
         == "\n0: a\n1: ['a', ['b', 'c']]\n2: b\n3: ['b', 'c']\n4: c\n5: [['a', ['b', 'c']], ['d', 'e', 'f']]\n6: d\n7: e\n8: ['d', 'e', 'f']\n9: f"
     )
 
+
 def test_reversed_in_list():
     "Test of reversed In Walk on a list"
     inp = ["a", "b"]
@@ -523,6 +527,7 @@ def test_reversed_in_list():
 
     printer(inp)
     assert printer.children[0].string == "\n0: b\n1: ['a', 'b']\n2: a"
+
 
 def test_reversed_in_dict():
     "Test of reversed In Walk on a dict"
@@ -533,6 +538,7 @@ def test_reversed_in_dict():
     printer(inp)
     assert printer.children[0].string == "\n0: b\n1: {'a': 'a', 'b': 'b'}\n2: a"
 
+
 def test_reversed_in_VisitableBaseModel():
     "Test of reversed In Walk on a VisitableBaseModel"
     inp = X(a="a", b="b")
@@ -541,6 +547,7 @@ def test_reversed_in_VisitableBaseModel():
 
     printer(inp)
     assert printer.children[0].string == "\n0: b\n1: a='a' b='b'\n2: a"
+
 
 def test_reversed_in_nested_list():
     "Test of reversed In Walk on a nested list"
@@ -554,6 +561,7 @@ def test_reversed_in_nested_list():
         == "\n0: f\n1: e\n2: ['d', 'e', 'f']\n3: d\n4: [['a', ['b', 'c']], ['d', 'e', 'f']]\n5: c\n6: ['b', 'c']\n7: b\n8: ['a', ['b', 'c']]\n9: a"
     )
 
+
 def test_in_TypeReflectBaseModel():
     "Test of In Walk on a TypeReflectBaseModel"
     inp = Y(a="a", b="b")
@@ -563,6 +571,7 @@ def test_in_TypeReflectBaseModel():
     printer(inp)
     assert printer.children[0].string == "\n0: a\n1: class_='Y' a='a' b='b'\n2: b"
 
+
 def test_reversed_in_TypeReflectBaseModel():
     "Test of reversed In Walk on a TypeReflectBaseModel"
     inp = Y(a="a", b="b")
@@ -571,6 +580,7 @@ def test_reversed_in_TypeReflectBaseModel():
 
     printer(inp)
     assert printer.children[0].string == "\n0: b\n1: class_='Y' a='a' b='b'\n2: a"
+
 
 def test_reversed_in_TypeReflectBaseModel_no_attribute():
     "Test of reversed In Walk on a TypeReflectBaseModel with no attribute for N"

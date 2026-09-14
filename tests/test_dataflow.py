@@ -13,15 +13,36 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Iterable
-from oqd_compiler_infrastructure import ForwardDataflowAnalysis, BackwardDataflowAnalysis, Lattice
+from typing import Dict, Iterable, List, Set
+
+from oqd_compiler_infrastructure import (
+    BackwardDataflowAnalysis,
+    ForwardDataflowAnalysis,
+    GraphProtocol,
+    Lattice,
+)
 
 
 @dataclass
-class SimpleGraph:
-    graph_nodes: list[str]
-    graph_preds: dict[str, list[str]]
-    graph_succs: dict[str, list[str]]
+class SimpleGraph(GraphProtocol[str, str]):
+    graph_nodes: List[str]
+    graph_preds: Dict[str, List[str]]
+    graph_succs: Dict[str, List[str]]
+
+    def __getitem__(self, idx):
+        return idx
+
+    def __setitem__(self, idx, value):
+        self.graph_nodes[self.graph_nodes.index(idx)] = value
+
+    def __delitem__(self, idx):
+        del self.graph_nodes[self.graph_nodes.index(idx)]
+
+    def __len__(self):
+        return len(self.graph_nodes)
+
+    def __iter__(self):
+        return iter({k: k for k in self.graph_nodes})
 
     def nodes(self) -> Iterable[str]:
         return self.graph_nodes
@@ -33,28 +54,27 @@ class SimpleGraph:
         return self.graph_succs.get(node, [])
 
 
-class SetReachabilityLattice(Lattice[set[str]]):
-
-    def top(self) -> set[str]:
+class SetReachabilityLattice(Lattice[Set[str]]):
+    def top(self) -> Set[str]:
         return set(self.graph_nodes)
 
-    def bottom(self) -> set[str]:
+    def bottom(self) -> Set[str]:
         return set()
 
-    def leq(self, t1: set[str], t2: set[str]) -> bool:
+    def leq(self, t1: Set[str], t2: Set[str]) -> bool:
         return t1 <= t2
 
-    def join(self, t1: set[str], t2: set[str]) -> set[str]:
+    def join(self, t1: Set[str], t2: Set[str]) -> Set[str]:
         return t1 | t2
 
-    def meet(self, t1: set[str], t2: set[str]) -> set[str]:
+    def meet(self, t1: Set[str], t2: Set[str]) -> Set[str]:
         return t1 & t2
 
 
-class Reachability(ForwardDataflowAnalysis[str, set[str]]):
+class Reachability(ForwardDataflowAnalysis[str, str, Set[str]]):
     lattice = SetReachabilityLattice()
 
-    def transfer(self, node: str, state_in: set[str]) -> set[str]:
+    def transfer(self, node: str, state_in: Set[str]) -> Set[str]:
         return state_in | {node}
 
 
@@ -75,9 +95,10 @@ class TestForwardDataflowAnalysis:
         assert result.iterations >= 3
 
 
-class BackwardReachability(BackwardDataflowAnalysis[str, set[str]]):
+class BackwardReachability(BackwardDataflowAnalysis[str, str, Set[str]]):
     lattice = SetReachabilityLattice()
-    def transfer(self, node: str, state_in: set[str]) -> set[str]:
+
+    def transfer(self, node: str, state_in: Set[str]) -> Set[str]:
         return state_in | {node}
 
 

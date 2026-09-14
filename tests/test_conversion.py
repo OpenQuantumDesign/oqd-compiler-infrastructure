@@ -13,13 +13,15 @@
 # limitations under the License.
 
 
+from typing import Dict, List, Tuple
+
 import pytest
+
 from oqd_compiler_infrastructure import (
-    Post,
     ConversionRule,
+    Post,
     VisitableBaseModel,
 )
-from typing import Dict, List, Tuple
 
 ########################################################################################
 
