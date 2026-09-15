@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from warnings import warn
+
 from oqd_compiler_infrastructure.base import PassBase
 from oqd_compiler_infrastructure.rule import ConversionRule
 
@@ -70,6 +72,10 @@ class WalkBase(PassBase):
 
     def generic_walk(self, model):
         return self.rule(model)
+
+    def walk_set(self, model):
+        warn("Sets are not traversed by oqd-compiler-infrastructure walks")
+        self.generic_walk(model)
 
 
 ########################################################################################
