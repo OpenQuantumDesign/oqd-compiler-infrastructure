@@ -377,3 +377,114 @@ class In(WalkBase):
         if keys:
             self(getattr(model, keys[-1]))
         return model
+
+
+########################################################################################
+
+
+class InplacePre(WalkBase):
+    """
+    This class represents the in-place pre order tree traversal algorithm that walks through an AST
+    and applies the rule in-place from top to bottom.
+    """
+
+    def walk_tuple(self, model):
+        new_model = self.rule(model)
+
+        new_model = tuple(
+            [self(e) for e in self.controlled_reverse(new_model, self.reverse)]
+        )
+
+        return self.controlled_reverse(new_model, self.reverse, restore_type=True)
+
+    def walk_dict(self, model):
+        new_model = self.rule(model)
+
+        for k, v in self.controlled_reverse(new_model.items(), self.reverse):
+            model[k] = self.rule(v)
+
+    def walk_list(self, model):
+        new_model = self.rule(model)
+
+        for n, e in self.controlled_reverse(list(enumerate(new_model)), self.reverse):
+            model[n] = self(e)
+
+    def walk_VisitableBaseModel(self, model):
+        new_model = self.rule(model)
+
+        for key in self.controlled_reverse(
+            new_model.__class__.model_fields.keys(), self.reverse
+        ):
+            if key == "class_":
+                continue
+            setattr(model, key, self(getattr(new_model, key)))
+
+    def walk_AST(self, model):
+        new_model = self.rule(model)
+
+        for key in self.controlled_reverse(new_model.__class__._fields, self.reverse):
+            setattr(model, key, self(getattr(new_model, key)))
+
+
+class InplacePost(WalkBase):
+    """
+    This class represents the in-place post order tree traversal algorithm that walks through an AST
+    and applies the rule in-place from bottom to top.
+
+    Acknowledgement:
+        This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L183), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/walk.jl#L9)
+    """
+
+    def walk_tuple(self, model):
+        new_model = tuple(
+            [self(e) for e in self.controlled_reverse(model, self.reverse)]
+        )
+        new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
+
+        if isinstance(self.rule, ConversionRule):
+            self.rule.operands = new_model
+            new_model = self.rule(model)
+        else:
+            new_model = self.rule(new_model)
+
+        return new_model
+
+    def walk_dict(self, model):
+        for k, v in self.controlled_reverse(model.items(), self.reverse):
+            model[k] = self(v)
+
+        new_model = self.rule(model)
+
+        for k, v in new_model.items():
+            model[k] = v
+
+    def walk_list(self, model):
+        for n, e in self.controlled_reverse(list(enumerate(model)), self.reverse):
+            model[n] = self(e)
+
+        new_model = self.rule(model)
+
+        for n, e in enumerate(new_model):
+            model[n] = e
+
+    def walk_VisitableBaseModel(self, model):
+        for key in self.controlled_reverse(
+            model.__class__.model_fields.keys(), self.reverse
+        ):
+            if key == "class_":
+                continue
+            setattr(model, key, self(getattr(model, key)))
+
+        new_model = self.rule(model)
+
+        for key in model.__class__.model_fields.keys():
+            setattr(model, key, getattr(new_model, key))
+
+    def walk_AST(self, model):
+        for key in self.controlled_reverse(model.__class__._fields, self.reverse):
+            setattr(model, key, self(getattr(model, key)))
+
+        new_model = self.rule(model)
+
+        for key in model.__class__.model_fields.keys():
+            setattr(model, key, getattr(new_model, key))
