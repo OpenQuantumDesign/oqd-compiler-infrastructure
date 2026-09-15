@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 
 from oqd_compiler_infrastructure import (
     In,
+    InplacePost,
+    InplacePre,
     Level,
     Post,
     Pre,
@@ -34,7 +37,6 @@ class PrintWalkOrder(RewriteRule):
     def generic_map(self, model):
         self.string += f"\n{self.current_index}: {model}"
         self.current_index += 1
-        pass
 
 
 class X(VisitableBaseModel):
@@ -476,121 +478,263 @@ class TestInWalk:
 ########################################################################################
 
 
-def test_in_list():
-    "Test of In Walk on a list"
-    inp = ["a", "b"]
+class TestInplacePreWalk:
+    def test_inplace_pre_list(self):
+        "Test of InplacePre Walk on a list"
+        inp = ["a", "b"]
 
-    printer = In(PrintWalkOrder())
+        printer = InplacePre(PrintWalkOrder())
 
-    printer(inp)
-    assert printer.children[0].string == "\n0: a\n1: ['a', 'b']\n2: b"
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: ['a', 'b']\n1: a\n2: b"
 
+    def test_inplace_pre_dict(self):
+        "Test of InplacePre Walk on a dict"
+        inp = {"a": "a", "b": "b"}
 
-def test_in_dict():
-    "Test of In Walk on a dict"
-    inp = {"a": "a", "b": "b"}
+        printer = InplacePre(PrintWalkOrder())
 
-    printer = In(PrintWalkOrder())
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: {'a': 'a', 'b': 'b'}\n1: a\n2: b"
 
-    printer(inp)
-    assert printer.children[0].string == "\n0: a\n1: {'a': 'a', 'b': 'b'}\n2: b"
+    def test_inplace_pre_VisitableBaseModel(self):
+        "Test of InplacePre Walk on a VisitableBaseModel"
+        inp = X(a="a", b="b")
 
+        printer = InplacePre(PrintWalkOrder())
 
-def test_in_VisitableBaseModel():
-    "Test of In Walk on a VisitableBaseModel"
-    inp = X(a="a", b="b")
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: a='a' b='b'\n1: a\n2: b"
 
-    printer = In(PrintWalkOrder())
+    def test_inplace_pre_nested_list(self):
+        "Test of InplacePre Walk on a nested list"
+        inp = ["a", ["b", "c"]]
 
-    printer(inp)
-    assert printer.children[0].string == "\n0: a\n1: a='a' b='b'\n2: b"
+        printer = InplacePre(PrintWalkOrder())
 
+        out = printer(inp)
+        assert inp is out
+        assert (
+            printer.children[0].string
+            == "\n0: ['a', ['b', 'c']]\n1: a\n2: ['b', 'c']\n3: b\n4: c"
+        )
 
-def test_in_nested_list():
-    "Test of In Walk on a nested list"
-    inp = [["a", ["b", "c"]], ["d", "e", "f"]]
+    def test_reversed_inplace_pre_list(self):
+        "Test of reversed InplacePre Walk on a list"
+        inp = ["a", "b"]
 
-    printer = In(PrintWalkOrder())
+        printer = InplacePre(PrintWalkOrder(), reverse=True)
 
-    printer(inp)
-    assert (
-        printer.children[0].string
-        == "\n0: a\n1: ['a', ['b', 'c']]\n2: b\n3: ['b', 'c']\n4: c\n5: [['a', ['b', 'c']], ['d', 'e', 'f']]\n6: d\n7: e\n8: ['d', 'e', 'f']\n9: f"
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: ['a', 'b']\n1: b\n2: a"
+
+    def test_reversed_inplace_pre_dict(self):
+        "Test of reversed InplacePre Walk on a dict"
+        inp = {"a": "a", "b": "b"}
+
+        printer = InplacePre(PrintWalkOrder(), reverse=True)
+
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: {'a': 'a', 'b': 'b'}\n1: b\n2: a"
+
+    def test_reversed_inplace_pre_VisitableBaseModel(self):
+        "Test of reversed InplacePre Walk on a VisitableBaseModel"
+        inp = X(a="a", b="b")
+
+        printer = InplacePre(PrintWalkOrder(), reverse=True)
+
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: a='a' b='b'\n1: b\n2: a"
+
+    def test_reversed_inplace_pre_nested_list(self):
+        "Test of reversed InplacePre Walk on a nested list"
+        inp = ["a", ["b", "c"]]
+
+        printer = InplacePre(PrintWalkOrder(), reverse=True)
+
+        out = printer(inp)
+        assert inp is out
+        assert (
+            printer.children[0].string
+            == "\n0: ['a', ['b', 'c']]\n1: ['b', 'c']\n2: c\n3: b\n4: a"
+        )
+
+    def test_inplace_pre_TypeReflectBaseModel(self):
+        "Test of InplacePre Walk on a TypeReflectBaseModel"
+        inp = Y(a="a", b="b")
+
+        printer = InplacePre(PrintWalkOrder())
+
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: class_='Y' a='a' b='b'\n1: a\n2: b"
+
+    def test_reversed_inplace_pre_TypeReflectBaseModel(self):
+        "Test of reversed InplacePre Walk on a TypeReflectBaseModel"
+        inp = Y(a="a", b="b")
+
+        printer = InplacePre(PrintWalkOrder(), reverse=True)
+
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: class_='Y' a='a' b='b'\n1: b\n2: a"
+
+    @pytest.mark.xfail(
+        raises=AssertionError,
+        reason="InplacePre walk creates new objects (with new memory address) for output when given immutable input",
     )
+    @pytest.mark.parametrize("inp", [("a", "b"), (["a", "b"], "c")])
+    def test_inplace_pre_immutable(self, inp):
+        "Test of InplacePost Walk on a immutable input"
+
+        printer = InplacePre(PrintWalkOrder())
+
+        out = printer(inp)
+        if inp is not out:
+            raise AssertionError("Input is not same memory address as output")
 
 
-def test_reversed_in_list():
-    "Test of reversed In Walk on a list"
-    inp = ["a", "b"]
-
-    printer = In(PrintWalkOrder(), reverse=True)
-
-    printer(inp)
-    assert printer.children[0].string == "\n0: b\n1: ['a', 'b']\n2: a"
+########################################################################################
 
 
-def test_reversed_in_dict():
-    "Test of reversed In Walk on a dict"
-    inp = {"a": "a", "b": "b"}
+class TestInplacePostWalk:
+    def test_inplace_post_list(self):
+        "Test of InplacePost Walk on a list"
+        inp = ["a", "b"]
 
-    printer = In(PrintWalkOrder(), reverse=True)
+        printer = InplacePost(PrintWalkOrder())
 
-    printer(inp)
-    assert printer.children[0].string == "\n0: b\n1: {'a': 'a', 'b': 'b'}\n2: a"
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: a\n1: b\n2: ['a', 'b']"
 
+    def test_inplace_post_dict(self):
+        "Test of InplacePost Walk on a dict"
+        inp = {"a": "a", "b": "b"}
 
-def test_reversed_in_VisitableBaseModel():
-    "Test of reversed In Walk on a VisitableBaseModel"
-    inp = X(a="a", b="b")
+        printer = InplacePost(PrintWalkOrder())
 
-    printer = In(PrintWalkOrder(), reverse=True)
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: a\n1: b\n2: {'a': 'a', 'b': 'b'}"
 
-    printer(inp)
-    assert printer.children[0].string == "\n0: b\n1: a='a' b='b'\n2: a"
+    def test_inplace_post_VisitableBaseModel(self):
+        "Test of InplacePost Walk on a VisitableBaseModel"
+        inp = X(a="a", b="b")
 
+        printer = InplacePost(PrintWalkOrder())
 
-def test_reversed_in_nested_list():
-    "Test of reversed In Walk on a nested list"
-    inp = [["a", ["b", "c"]], ["d", "e", "f"]]
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: a\n1: b\n2: a='a' b='b'"
 
-    printer = In(PrintWalkOrder(), reverse=True)
+    def test_inplace_post_nested_list(self):
+        "Test of InplacePost Walk on a nested list"
+        inp = ["a", ["b", "c"]]
 
-    printer(inp)
-    assert (
-        printer.children[0].string
-        == "\n0: f\n1: e\n2: ['d', 'e', 'f']\n3: d\n4: [['a', ['b', 'c']], ['d', 'e', 'f']]\n5: c\n6: ['b', 'c']\n7: b\n8: ['a', ['b', 'c']]\n9: a"
+        printer = InplacePost(PrintWalkOrder())
+
+        out = printer(inp)
+        assert inp is out
+        assert (
+            printer.children[0].string
+            == "\n0: a\n1: b\n2: c\n3: ['b', 'c']\n4: ['a', ['b', 'c']]"
+        )
+
+    def test_reversed_inplace_post_list(self):
+        "Test of reversed InplacePost Walk on a list"
+        inp = ["a", "b"]
+
+        printer = InplacePost(PrintWalkOrder(), reverse=True)
+
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: b\n1: a\n2: ['a', 'b']"
+
+    def test_reversed_inplace_post_dict(self):
+        "Test of reversed InplacePost Walk on a dict"
+        inp = {"a": "a", "b": "b"}
+
+        printer = InplacePost(PrintWalkOrder(), reverse=True)
+
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: b\n1: a\n2: {'a': 'a', 'b': 'b'}"
+
+    def test_reversed_inplace_post_VisitableBaseModel(self):
+        "Test of reversed InplacePost Walk on a VisitableBaseModel"
+        inp = X(a="a", b="b")
+
+        printer = InplacePost(PrintWalkOrder(), reverse=True)
+
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: b\n1: a\n2: a='a' b='b'"
+
+    def test_reversed_inplace_post_nested_list(self):
+        "Test of reversed InplacePost Walk on a nested list"
+        inp = ["a", ["b", "c"]]
+
+        printer = InplacePost(PrintWalkOrder(), reverse=True)
+
+        out = printer(inp)
+        assert inp is out
+        assert (
+            printer.children[0].string
+            == "\n0: c\n1: b\n2: ['b', 'c']\n3: a\n4: ['a', ['b', 'c']]"
+        )
+
+    def test_inplace_post_TypeReflectBaseModel(self):
+        "Test of InplacePost Walk on a TypeReflectBaseModel"
+        inp = Y(a="a", b="b")
+
+        printer = InplacePost(PrintWalkOrder())
+
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: a\n1: b\n2: class_='Y' a='a' b='b'"
+
+    def test_reversed_inplace_post_TypeReflectBaseModel(self):
+        "Test of reversed InplacePost Walk on a TypeReflectBaseModel"
+        inp = Y(a="a", b="b")
+
+        printer = InplacePost(PrintWalkOrder(), reverse=True)
+
+        out = printer(inp)
+        assert inp is out
+        assert printer.children[0].string == "\n0: b\n1: a\n2: class_='Y' a='a' b='b'"
+
+    @pytest.mark.xfail(
+        raises=AssertionError,
+        reason="InplacePost walk creates new objects (with new memory address) for output when given immutable input",
     )
+    @pytest.mark.parametrize("inp", [("a", "b"), (["a", "b"], "c")])
+    def test_inplace_post_immutable(self, inp):
+        "Test of InplacePost Walk on a immutable input"
+
+        printer = InplacePost(PrintWalkOrder())
+
+        out = printer(inp)
+        if inp is not out:
+            raise AssertionError("Input is not same memory address as output")
 
 
-def test_in_TypeReflectBaseModel():
-    "Test of In Walk on a TypeReflectBaseModel"
-    inp = Y(a="a", b="b")
+class TestWalkUnsupportedTypes:
+    @pytest.mark.parametrize("walk", [Pre, Post, InplacePost, InplacePre, In, Level])
+    def test_walk_set(self, walk):
+        "Test walks applied on set raises a warning as sets are not traversed through by the walks."
+        inp = {"a", "b", "c"}
 
-    printer = In(PrintWalkOrder())
+        printer = walk(PrintWalkOrder())
 
-    printer(inp)
-    assert printer.children[0].string == "\n0: a\n1: class_='Y' a='a' b='b'\n2: b"
-
-
-def test_reversed_in_TypeReflectBaseModel():
-    "Test of reversed In Walk on a TypeReflectBaseModel"
-    inp = Y(a="a", b="b")
-
-    printer = In(PrintWalkOrder(), reverse=True)
-
-    printer(inp)
-    assert printer.children[0].string == "\n0: b\n1: class_='Y' a='a' b='b'\n2: a"
-
-
-def test_reversed_in_TypeReflectBaseModel_no_attribute():
-    "Test of reversed In Walk on a TypeReflectBaseModel with no attribute for N"
-    x = X(a="x1", b="x2")
-    n = N()
-    inp = A(n=n, x=x)
-    printer = In(PrintWalkOrder(), reverse=True)
-
-    printer(inp)
-    assert (
-        printer.children[0].string
-        == "\n0: x2\n1: a='x1' b='x2'\n2: x1\n3: n=N(class_='N') x=X(a='x1', b='x2')\n4: class_='N'"
-    )
+        with pytest.warns(
+            UserWarning,
+            match="^Sets are not traversed by oqd-compiler-infrastructure walks$",
+        ):
+            printer(inp)
