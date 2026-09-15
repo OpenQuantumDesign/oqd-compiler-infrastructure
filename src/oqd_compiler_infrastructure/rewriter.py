@@ -52,7 +52,6 @@ class Chain(RewriterBase):
         super().__init__()
 
         self.rules = list(rules)
-        pass
 
     @property
     def children(self):
@@ -79,7 +78,6 @@ class FixedPoint(RewriterBase):
 
         self.rule = rule
         self.max_iter = max_iter
-        pass
 
     @property
     def children(self):

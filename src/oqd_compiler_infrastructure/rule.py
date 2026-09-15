@@ -60,8 +60,6 @@ class RewriteRule(RuleBase):
     def generic_map(self, model):
         return model
 
-    pass
-
 
 class ConversionRule(RuleBase):
     """
