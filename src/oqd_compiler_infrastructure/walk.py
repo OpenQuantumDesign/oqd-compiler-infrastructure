@@ -41,7 +41,6 @@ class WalkBase(PassBase):
 
         self.rule = rule
         self.reverse = reverse
-        pass
 
     @staticmethod
     def controlled_reverse(iterable, reverse, *, restore_type=False):
@@ -71,8 +70,6 @@ class WalkBase(PassBase):
 
     def generic_walk(self, model):
         return self.rule(model)
-
-    pass
 
 
 ########################################################################################
@@ -403,11 +400,15 @@ class InplacePre(WalkBase):
         for k, v in self.controlled_reverse(new_model.items(), self.reverse):
             model[k] = self.rule(v)
 
+        return model
+
     def walk_list(self, model):
         new_model = self.rule(model)
 
         for n, e in self.controlled_reverse(list(enumerate(new_model)), self.reverse):
             model[n] = self(e)
+
+        return model
 
     def walk_VisitableBaseModel(self, model):
         new_model = self.rule(model)
@@ -419,11 +420,15 @@ class InplacePre(WalkBase):
                 continue
             setattr(model, key, self(getattr(new_model, key)))
 
+        return model
+
     def walk_AST(self, model):
         new_model = self.rule(model)
 
         for key in self.controlled_reverse(new_model.__class__._fields, self.reverse):
             setattr(model, key, self(getattr(new_model, key)))
+
+        return model
 
 
 class InplacePost(WalkBase):
@@ -458,6 +463,8 @@ class InplacePost(WalkBase):
         for k, v in new_model.items():
             model[k] = v
 
+        return model
+
     def walk_list(self, model):
         for n, e in self.controlled_reverse(list(enumerate(model)), self.reverse):
             model[n] = self(e)
@@ -466,6 +473,8 @@ class InplacePost(WalkBase):
 
         for n, e in enumerate(new_model):
             model[n] = e
+
+        return model
 
     def walk_VisitableBaseModel(self, model):
         for key in self.controlled_reverse(
@@ -480,6 +489,8 @@ class InplacePost(WalkBase):
         for key in model.__class__.model_fields.keys():
             setattr(model, key, getattr(new_model, key))
 
+        return model
+
     def walk_AST(self, model):
         for key in self.controlled_reverse(model.__class__._fields, self.reverse):
             setattr(model, key, self(getattr(model, key)))
@@ -488,3 +499,5 @@ class InplacePost(WalkBase):
 
         for key in model.__class__.model_fields.keys():
             setattr(model, key, getattr(new_model, key))
+
+        return model
