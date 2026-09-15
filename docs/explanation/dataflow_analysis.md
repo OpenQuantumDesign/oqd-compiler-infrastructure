@@ -21,29 +21,6 @@ The lattice is useful when performing dataflow analysis on a program.
 
 ///
 
-<!--
-The `Lattice` class in [`lattice.py`](../../src/oqd_compiler_infrastructure/lattice.py) defines a generic lattice interface with all the methods it requires. The following methods are defined:
-
-- top(): Returns the top element of the lattice.
-- bottom(): Returns the bottom element of the lattice.
-- leq(): Returns True if `t1 <= t2` in the lattice.
-- join(): Returns the least upper bound of `t1` and `t2`.
-- meet(): Returns the greatest lower bound of `t1` and `t2`.
-- equal(): Returns True if `t1` and `t2` are equal in the lattice.
-
-These methods allow analysis to be done on a concrete instance of the lattice.
-
-The `LatticeBase` class defines a simple concrete implementation of a `Lattice`. It stores a dictionary that maps each node of the lattice to its immediate parent(s). It defines `LatticeTop` as the top element, and `LatticeBottom` as the bottom element of the lattice. This class defines the following helper methods:
-
-- is_class_node(t): Returns True if `t` is a valid lattice node.
-- atomic_ancestors(t): Returns the atomic ancestors of a given node.
-
-These helper methods are used in the concrete implementation of the lattice operation methods: `leq`, `join`, and `meet`.
-
-You can define your own lattice using the `LatticeBase` class.
-
-The `maplattice` function builds a lattice over `dict[str, LatticeValue]` map states from a value lattice class (such as `LatticeBase`). It returns a new lattice class, which you instantiate to use: `maplattice(MyLattice)()`. The function implments `leq`, `join`, and `meet` methods for analyses that map variables (or labels) to lattice values. -->
-
 ## Graph Protocol <div style="float:right;"> [![](https://img.shields.io/badge/Implementation-7C4DFF)][oqd_compiler_infrastructure.interface.GraphProtocol] </div>
 
 The graph protocol defines a generic interface for directed graphs consisting of:

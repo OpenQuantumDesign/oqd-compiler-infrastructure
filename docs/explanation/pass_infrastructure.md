@@ -77,16 +77,6 @@ $$ A0\rightarrow B1 \rightarrow C3 \rightarrow C2 \rightarrow B0 \rightarrow C1 
 [![](https://img.shields.io/badge/Implementation-7C4DFF)][oqd_compiler_infrastructure.walk.Pre]
 ////
 
-//// html | div
-</br>
-////
-
-//// note
-
-To perform rules inplace instead of creating a new object, use the [`InplacePre`][oqd_compiler_infrastructure.walk.InplacePre]
-
-////
-
 ///
 
 /// tab | Post
@@ -107,16 +97,6 @@ $$ C3\rightarrow C2 \rightarrow B1 \rightarrow C1 \rightarrow C0 \rightarrow B0 
 
 //// html | div[style='float: right']
 [![](https://img.shields.io/badge/Implementation-7C4DFF)][oqd_compiler_infrastructure.walk.Post]
-////
-
-//// html | div
-</br>
-////
-
-//// note
-
-To perform rules inplace instead of creating a new object, use the [`InplacePost`][oqd_compiler_infrastructure.walk.InplacePost]
-
 ////
 
 ///
