@@ -29,15 +29,16 @@ class LatticeTop:
     In `LatticeBase`, nodes are classes that inherit from `LatticeTop`.
     """
 
-    pass
+    def __new__(self, *args, **kwargs):
+        raise AssertionError(
+            "Lattice value types cannot be instantiated use the class instead, e.g. LatticeTop instead of LatticeTop()"
+        )
 
 
 class LatticeBottom(LatticeTop):
     """
     Base class representing the bottom element of the lattice.
     """
-
-    pass
 
 
 LatticeValue = TypeVar("LatticeValue")
