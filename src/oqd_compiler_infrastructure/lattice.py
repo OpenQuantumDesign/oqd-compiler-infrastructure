@@ -175,9 +175,8 @@ def maplattice(lattice: Type[Lattice]) -> Type[Lattice]:
         if t2 is LatticeBottom:
             return self.leq(t1, {})
         v = self._element_lattice()
-        b = v.bottom()
         for k in set(t1).union(t2):
-            if not v.leq(t1.get(k, b), t2.get(k, b)):
+            if not v.leq(t1.get(k, v.bottom()), t2.get(k, v.top())):
                 return False
         return True
 
@@ -192,8 +191,10 @@ def maplattice(lattice: Type[Lattice]) -> Type[Lattice]:
         if t2 is LatticeBottom:
             return t1
         v = self._element_lattice()
-        b = v.bottom()
-        return {k: v.join(t1.get(k, b), t2.get(k, b)) for k in set(t1).union(t2)}
+        return {
+            k: v.join(t1.get(k, v.bottom()), t2.get(k, v.bottom()))
+            for k in set(t1).union(t2)
+        }
 
     @wraps
     def meet(self, t1: LatticeValue, t2: LatticeValue) -> LatticeValue:
@@ -206,8 +207,9 @@ def maplattice(lattice: Type[Lattice]) -> Type[Lattice]:
         if t2 is LatticeTop:
             return t1
         v = self._element_lattice()
-        b = v.bottom()
-        return {k: v.meet(t1.get(k, b), t2.get(k, b)) for k in set(t1).union(t2)}
+        return {
+            k: v.meet(t1.get(k, v.top()), t2.get(k, v.top())) for k in set(t1).union(t2)
+        }
 
     def update_ns(ns):
         ns.update(

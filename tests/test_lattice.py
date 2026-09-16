@@ -61,9 +61,16 @@ class Testmaplattice:
     def test_bottom(self, map_lattice):
         assert map_lattice.bottom() == LatticeBottom
 
-    def test_leq_with_missing_keys(self, map_lattice):
+    def test_leq_lhs_with_missing_keys(self, map_lattice):
         left = {"x": B}
         right = {"x": A, "y": C}
+        assert map_lattice.leq(left, right)
+        assert not map_lattice.leq(right, left)
+
+    def test_leq_rhs_with_missing_keys(self, map_lattice):
+        left = {"x": B, "y": C}
+        right = {"x": A}
+
         assert map_lattice.leq(left, right)
         assert not map_lattice.leq(right, left)
 
@@ -75,4 +82,4 @@ class Testmaplattice:
     def test_meet(self, map_lattice):
         left = {"x": B, "y": C}
         right = {"x": A}
-        assert map_lattice.meet(left, right) == {"x": B, "y": LatticeBottom}
+        assert map_lattice.meet(left, right) == {"x": B, "y": C}
