@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import types
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, Type, TypeVar, Literal
+from typing import Dict, Generic, Literal, Type, TypeVar
 
 from .meta import Singleton
 
@@ -94,7 +94,7 @@ class LatticeBase(Lattice[LatticeValue]):
 
     def is_class_node(self, t: object) -> bool:
         """Returns True if `t` is a valid lattice node."""
-        return isinstance(t, type) and issubclass(t, LatticeTop)
+        return isinstance(t, type) and issubclass(t, self.top())
 
     def atomic_ancestors(self, t: object) -> set[object]:
         """Returns the atomic ancestors of a given node."""
@@ -104,7 +104,7 @@ class LatticeBase(Lattice[LatticeValue]):
 
     def leq(self, t1: LatticeValue, t2: LatticeValue) -> bool:
         """Returns True if `t1 <= t2` in the lattice."""
-        if t1 is LatticeBottom:
+        if t1 is self.bottom():
             return True
         if not self.is_class_node(t1) or not self.is_class_node(t2):
             return False
@@ -119,12 +119,12 @@ class LatticeBase(Lattice[LatticeValue]):
         if self.leq(t2, t1):
             return t1
         if not self.is_class_node(t1) or not self.is_class_node(t2):
-            return LatticeTop
+            return self.top()
         common_ancestors = self.atomic_ancestors(t1).intersection(
             self.atomic_ancestors(t2)
         )
         if not common_ancestors:
-            return LatticeTop
+            return self.top()
 
         minimal_ancestors = set()
         for candidate in common_ancestors:
@@ -135,7 +135,7 @@ class LatticeBase(Lattice[LatticeValue]):
             if not smaller:
                 minimal_ancestors.add(candidate)
         if len(minimal_ancestors) != 1:
-            return LatticeTop
+            return self.top()
         return next(iter(minimal_ancestors))
 
     def meet(self, t1: LatticeValue, t2: LatticeValue) -> LatticeValue:
@@ -144,7 +144,7 @@ class LatticeBase(Lattice[LatticeValue]):
             return t1
         if self.leq(t2, t1):
             return t2
-        return LatticeBottom
+        return self.bottom()
 
 
 def maplattice(
