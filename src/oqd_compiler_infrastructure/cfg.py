@@ -86,9 +86,6 @@ class CFG(VisitableBaseModel, GraphProtocol[int, CFGBlock]):
 
 
 class CFGBlockAccumulator(RewriteRule):
-    def __init__(self):
-        self.blocks = {}
-
     def _accumulate(self, block1, block2):
         self.blocks[block1].stmts += self.blocks[block2].stmts
         self.blocks[block1].succs = self.blocks[block2].succs
