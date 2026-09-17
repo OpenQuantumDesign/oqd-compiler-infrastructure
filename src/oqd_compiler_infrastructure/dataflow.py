@@ -45,15 +45,10 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
 
     lattice: ClassVar[Lattice[LatticeValue]]
 
-    @abstractmethod
-    def transfer(
-        self,
-        graph: GraphProtocol[NodeLabelType, NodeType],
-        node: NodeLabelType,
-        state_in: LatticeValue,
-    ) -> LatticeValue:
-        """Returns the state of a given node after transfer."""
-        pass
+    def __init__(self, *, max_iterations=1000000):
+        super().__init__()
+
+        self.max_iterations = max_iterations
 
     @abstractmethod
     def sources(
@@ -68,6 +63,20 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
     ) -> Iterable[NodeLabelType]:
         """Neighbors to reschedule when `node`'s result changes."""
         pass
+
+    @abstractmethod
+    def transfer(
+        self,
+        graph: GraphProtocol[NodeLabelType, NodeType],
+        node: NodeLabelType,
+        state_in: LatticeValue,
+    ) -> LatticeValue:
+        """Returns the state of a given node after transfer."""
+        pass
+
+    @abstractmethod
+    def merge(self, states: Iterable[LatticeValue]) -> LatticeValue:
+        """Merges incoming states."""
 
     @abstractmethod
     def result(
@@ -99,13 +108,14 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
             merged = self.lattice.meet(merged, state)
         return merged
 
-    def init_state(self, nodes) -> Dict[NodeLabelType, LatticeValue]:
+    def initial_state(self, nodes) -> Dict[NodeLabelType, LatticeValue]:
+        """Initial state of the nodes in the CFG."""
         return {node: self.lattice.top() for node in nodes}
 
     def analyze(
         self,
         graph: GraphProtocol[NodeLabelType, NodeType],
-        merge_function: Callable[[Iterable[LatticeValue]], LatticeValue],
+        initial_state: Dict[NodeLabelType, NodeType] = None,
     ) -> DataflowResult[NodeLabelType, LatticeValue]:
         """
         Runs the worklist algorithm and returns the result of the dataflow analysis.
@@ -117,19 +127,30 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
         - Returns final states and iteration count.
         """
         nodes = list(graph.nodes())
-        boundary = self.init_state(nodes)
-        result = self.init_state(nodes)
+
+        if initial_state is None:
+            initial_state = self.initial_state(nodes)
+
+        boundary = initial_state.copy()
+        result = initial_state.copy()
 
         worklist = deque(nodes)
         iterations = 0
 
         while worklist:
-            node = worklist.popleft()
             iterations += 1
+
+            if iterations > self.max_iterations:
+                raise AssertionError(
+                    f"DataflowAnalysis exceeded maximum number of iterations ({self.max_iterations}), current state:"
+                    f"{self.result(boundary, result, iterations)}"
+                )
+
+            node = worklist.popleft()
 
             srcs = list(self.sources(graph, node))
             if srcs:
-                merged_input = merge_function(result[n] for n in srcs)
+                merged_input = self.merge(result[n] for n in srcs)
             else:
                 merged_input = self.lattice.bottom()
 
