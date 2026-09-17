@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import types
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, Type, TypeVar
+from typing import Dict, Generic, Type, TypeVar, Literal
 
 from .meta import Singleton
 
@@ -147,9 +147,29 @@ class LatticeBase(Lattice[LatticeValue]):
         return LatticeBottom
 
 
-def maplattice(lattice: Type[Lattice]) -> Type[Lattice]:
+def maplattice(
+    lattice: Type[Lattice],
+    *,
+    default: Literal["flexible", "top", "bottom", "strict"] = "flexible",
+) -> Type[Lattice]:
     """Builds a map lattice class from a lattice class for map based analysis"""
     name = f"Map{lattice.__name__}"
+
+    match default:
+        case "flexible":
+            upper_default = lattice().top()
+            lower_default = lattice().bottom()
+        case "top":
+            upper_default = lattice().top()
+            lower_default = lattice().top()
+        case "bottom":
+            upper_default = lattice().bottom()
+            lower_default = lattice().bottom()
+        case "strict":
+            upper_default = lattice().bottom()
+            lower_default = lattice().top()
+        case _:
+            raise ValueError("default should be one of [flexible, top, bottom, strict]")
 
     def wraps(f):
         f.__qualname__ = f"{name}.{f.__name__}"
@@ -177,7 +197,7 @@ def maplattice(lattice: Type[Lattice]) -> Type[Lattice]:
             return self.leq(t1, {})
         v = self._element_lattice()
         for k in set(t1).union(t2):
-            if not v.leq(t1.get(k, v.bottom()), t2.get(k, v.top())):
+            if not v.leq(t1.get(k, lower_default), t2.get(k, upper_default)):
                 return False
         return True
 
@@ -193,7 +213,7 @@ def maplattice(lattice: Type[Lattice]) -> Type[Lattice]:
             return t1
         v = self._element_lattice()
         return {
-            k: v.join(t1.get(k, v.bottom()), t2.get(k, v.bottom()))
+            k: v.join(t1.get(k, lower_default), t2.get(k, lower_default))
             for k in set(t1).union(t2)
         }
 
@@ -209,7 +229,8 @@ def maplattice(lattice: Type[Lattice]) -> Type[Lattice]:
             return t1
         v = self._element_lattice()
         return {
-            k: v.meet(t1.get(k, v.top()), t2.get(k, v.top())) for k in set(t1).union(t2)
+            k: v.meet(t1.get(k, upper_default), t2.get(k, upper_default))
+            for k in set(t1).union(t2)
         }
 
     def update_ns(ns):
