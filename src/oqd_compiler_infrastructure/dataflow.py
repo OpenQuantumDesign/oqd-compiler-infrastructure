@@ -152,7 +152,7 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
             if srcs:
                 merged_input = self.merge(result[n] for n in srcs)
             else:
-                merged_input = self.lattice.bottom()
+                merged_input = result[node]
 
             if not self.lattice.equal(boundary[node], merged_input):
                 boundary[node] = merged_input
