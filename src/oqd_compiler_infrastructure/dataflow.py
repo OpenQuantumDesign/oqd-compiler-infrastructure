@@ -46,7 +46,12 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
     lattice: ClassVar[Lattice[LatticeValue]]
 
     @abstractmethod
-    def transfer(self, node: NodeLabelType, state_in: LatticeValue) -> LatticeValue:
+    def transfer(
+        self,
+        graph: GraphProtocol[NodeLabelType, NodeType],
+        node: NodeLabelType,
+        state_in: LatticeValue,
+    ) -> LatticeValue:
         """Returns the state of a given node after transfer."""
         pass
 
@@ -74,10 +79,6 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
         """Maps boundary/result states onto in/out states."""
         pass
 
-    def init_state(self) -> LatticeValue:
-        """Initializes the lattice with the lattice's bottom operation."""
-        return self.lattice.bottom()
-
     def merge_union(self, states: Iterable[LatticeValue]) -> LatticeValue:
         """Joins incoming states using the lattice's join operation."""
         states_list = list(states)
@@ -98,6 +99,9 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
             merged = self.lattice.meet(merged, state)
         return merged
 
+    def init_state(self, nodes) -> Dict[NodeLabelType, LatticeValue]:
+        return {node: self.lattice.top() for node in nodes}
+
     def analyze(
         self,
         graph: GraphProtocol[NodeLabelType, NodeType],
@@ -113,8 +117,8 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
         - Returns final states and iteration count.
         """
         nodes = list(graph.nodes())
-        boundary = {node: self.init_state() for node in nodes}
-        result = {node: self.init_state() for node in nodes}
+        boundary = self.init_state(nodes)
+        result = self.init_state(nodes)
 
         worklist = deque(nodes)
         iterations = 0
@@ -132,7 +136,7 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
             if not self.lattice.equal(boundary[node], merged_input):
                 boundary[node] = merged_input
 
-            next_result = self.transfer(node, merged_input)
+            next_result = self.transfer(graph, node, merged_input)
             if self.lattice.equal(result[node], next_result):
                 continue
 
