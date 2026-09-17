@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .base import PassBase
-from .cfg import CFG, CFGBlock, CFGBlockAccumulator, cfg_to_dot
+from .cfg import CFG, CFGBlock, CFGBlockAccumulator, RelabelCFGBlocks, cfg_to_dot
 from .dataflow import (
     BackwardDataflowAnalysis,
     DataflowAnalysis,
@@ -66,4 +66,5 @@ __all__ = [
     "CFGBlock",
     "cfg_to_dot",
     "CFGBlockAccumulator",
+    "RelabelCFGBlocks",
 ]

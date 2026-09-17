@@ -126,6 +126,32 @@ class CFGBlockAccumulator(RewriteRule):
         return blocks
 
 
+class RelabelCFGBlocks(RewriteRule):
+    def map_CFG(self, model: CFG):
+        self.relabel_mapping = {
+            node_label: n for n, node_label in enumerate(sorted(model.keys()))
+        }
+
+        new_blocks = {}
+        for k, v in self.relabel_mapping.items():
+            new_blocks[v] = self(model[k])
+
+        model.blocks = new_blocks
+
+        return model
+
+    def map_CFGBlock(self, model: CFGBlock):
+        model.register_id = self.relabel_mapping[model.register_id]
+        model.preds = [self.relabel_mapping[pred] for pred in model.preds]
+        model.succs = [self.relabel_mapping[succ] for succ in model.succs]
+        model.edge_labels = {
+            self.relabel_mapping[succ]: label
+            for succ, label in model.edge_labels.items()
+        }
+
+        return model
+
+
 ########################################################################################
 
 
@@ -173,3 +199,6 @@ def cfg_to_dot(cfg: CFG, *, serialize=None, max_lines=5) -> graphviz.Digraph:
     _cfg2dot = CFGtoDot(serialize=serialize, max_lines=max_lines)
 
     return _cfg2dot(cfg)
+
+
+########################################################################################
