@@ -70,6 +70,7 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
         graph: GraphProtocol[NodeLabelType, NodeType],
         node: NodeLabelType,
         state_in: LatticeValue,
+        **kwargs,
     ) -> LatticeValue:
         """Returns the state of a given node after transfer."""
         pass
@@ -115,7 +116,9 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
     def analyze(
         self,
         graph: GraphProtocol[NodeLabelType, NodeType],
+        *,
         initial_state: Dict[NodeLabelType, NodeType] = None,
+        **kwargs,
     ) -> DataflowResult[NodeLabelType, LatticeValue]:
         """
         Runs the worklist algorithm and returns the result of the dataflow analysis.
@@ -157,7 +160,7 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
             if not self.lattice.equal(boundary[node], merged_input):
                 boundary[node] = merged_input
 
-            next_result = self.transfer(graph, node, merged_input)
+            next_result = self.transfer(graph, node, merged_input, **kwargs)
             if self.lattice.equal(result[node], next_result):
                 continue
 
