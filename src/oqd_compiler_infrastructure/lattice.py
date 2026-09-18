@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import types
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, Literal, Type, TypeVar
+from typing import Dict, Generic, Literal, Set, Type, TypeVar
 
 from .meta import Singleton
 
@@ -251,29 +251,34 @@ def maplattice(
     return cls
 
 
-PowersetValue = set | type[LatticeTop]
+SetElementTypeVar = TypeVar("SetElementTypeVar")
+PowersetLatticeValue = Set[SetElementTypeVar] | LatticeTop
 
 
-class PowersetLattice(Lattice[PowersetValue]):
-    def top(self) -> PowersetValue:
+class PowersetLattice(Lattice[PowersetLatticeValue]):
+    def top(self) -> PowersetLatticeValue:
         return LatticeTop
 
-    def bottom(self) -> PowersetValue:
+    def bottom(self) -> PowersetLatticeValue:
         return set()
 
-    def leq(self, t1: PowersetValue, t2: PowersetValue) -> bool:
+    def leq(self, t1: PowersetLatticeValue, t2: PowersetLatticeValue) -> bool:
         if t2 is LatticeTop:
             return True
         if t1 is LatticeTop:
             return False
         return t1 <= t2
 
-    def join(self, t1: PowersetValue, t2: PowersetValue) -> PowersetValue:
+    def join(
+        self, t1: PowersetLatticeValue, t2: PowersetLatticeValue
+    ) -> PowersetLatticeValue:
         if t1 is LatticeTop or t2 is LatticeTop:
             return LatticeTop
         return t1 | t2
 
-    def meet(self, t1: PowersetValue, t2: PowersetValue) -> PowersetValue:
+    def meet(
+        self, t1: PowersetLatticeValue, t2: PowersetLatticeValue
+    ) -> PowersetLatticeValue:
         if t1 is LatticeTop:
             return t2
         if t2 is LatticeTop:
