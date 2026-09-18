@@ -16,7 +16,8 @@ from __future__ import annotations
 
 import types
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, Literal, Set, Type, TypeVar
+from functools import cache
+from typing import ClassVar, Dict, Generic, Literal, Set, Type, TypeVar
 
 from .meta import Singleton
 
@@ -44,7 +45,14 @@ class LatticeBottom(LatticeTop):
 LatticeValue = TypeVar("LatticeValue")
 
 
-class Lattice(ABC, Generic[LatticeValue], metaclass=Singleton):
+########################################################################################
+
+
+class LatticeMeta(Singleton):
+    _singleton_instance_map = {}
+
+
+class Lattice(ABC, Generic[LatticeValue], metaclass=LatticeMeta):
     """
     Abstract base class for a lattice interface.
     """
@@ -147,108 +155,7 @@ class LatticeBase(Lattice[LatticeValue]):
         return self.bottom()
 
 
-def maplattice(
-    lattice: Type[Lattice],
-    *,
-    default: Literal["flexible", "top", "bottom", "strict"] = "flexible",
-) -> Type[Lattice]:
-    """Builds a map lattice class from a lattice class for map based analysis"""
-    name = f"Map{lattice.__name__}"
-
-    match default:
-        case "flexible":
-            upper_default = lattice().top()
-            lower_default = lattice().bottom()
-        case "top":
-            upper_default = lattice().top()
-            lower_default = lattice().top()
-        case "bottom":
-            upper_default = lattice().bottom()
-            lower_default = lattice().bottom()
-        case "strict":
-            upper_default = lattice().bottom()
-            lower_default = lattice().top()
-        case _:
-            raise ValueError("default should be one of [flexible, top, bottom, strict]")
-
-    def wraps(f):
-        f.__qualname__ = f"{name}.{f.__name__}"
-        return f
-
-    @wraps
-    def top(self) -> LatticeValue:
-        """Returns the top element of the lattice."""
-        return LatticeTop
-
-    @wraps
-    def bottom(self) -> LatticeValue:
-        """Returns the bottom element of the lattice."""
-        return LatticeBottom
-
-    @wraps
-    def leq(self, t1: LatticeValue, t2: LatticeValue) -> bool:
-        """Returns True if `t1 <= t2` in the lattice."""
-
-        if t1 is LatticeBottom or t2 is LatticeTop:
-            return True
-        if t1 is LatticeTop:
-            return t2 is LatticeTop
-        if t2 is LatticeBottom:
-            return self.leq(t1, {})
-        v = self._element_lattice()
-        for k in set(t1).union(t2):
-            if not v.leq(t1.get(k, lower_default), t2.get(k, upper_default)):
-                return False
-        return True
-
-    @wraps
-    def join(self, t1: LatticeValue, t2: LatticeValue) -> LatticeValue:
-        """Returns the least upper bound of `t1` and `t2`."""
-
-        if t1 is LatticeTop or t2 is LatticeTop:
-            return LatticeTop
-        if t1 is LatticeBottom:
-            return t2
-        if t2 is LatticeBottom:
-            return t1
-        v = self._element_lattice()
-        return {
-            k: v.join(t1.get(k, lower_default), t2.get(k, lower_default))
-            for k in set(t1).union(t2)
-        }
-
-    @wraps
-    def meet(self, t1: LatticeValue, t2: LatticeValue) -> LatticeValue:
-        """Returns the greatest lower bound of `t1` and `t2`."""
-
-        if t1 is LatticeBottom or t2 is LatticeBottom:
-            return LatticeBottom
-        if t1 is LatticeTop:
-            return t2
-        if t2 is LatticeTop:
-            return t1
-        v = self._element_lattice()
-        return {
-            k: v.meet(t1.get(k, upper_default), t2.get(k, upper_default))
-            for k in set(t1).union(t2)
-        }
-
-    def update_ns(ns):
-        ns.update(
-            {
-                "__module__": lattice.__module__,
-                "top": top,
-                "bottom": bottom,
-                "leq": leq,
-                "join": join,
-                "meet": meet,
-                "_element_lattice": lattice,
-            }
-        )
-        return ns
-
-    cls = types.new_class(name, (Lattice[Dict[str, LatticeValue]],), None, update_ns)
-    return cls
+########################################################################################
 
 
 SetElementTypeVar = TypeVar("SetElementTypeVar")
@@ -284,3 +191,144 @@ class PowersetLattice(Lattice[PowersetLatticeValue]):
         if t2 is LatticeTop:
             return t1
         return t1 & t2
+
+
+########################################################################################
+
+
+MapLatticeValue = Dict[str, LatticeValue]
+
+
+class MapLattice(Lattice[MapLatticeValue]):
+    element_lattice = ClassVar[Lattice[LatticeValue]]
+    default_mode = ClassVar[Literal["flexible", "top", "bottom", "strict"]]
+
+    def __new__(cls):
+        if cls is MapLattice:
+            raise TypeError("Can't instantiate abstract class {}".format(cls.__name__))
+        return super().__new__(cls)
+
+    @property
+    def lower_default(self):
+        match self.default_mode:
+            case "flexible" | "bottom":
+                return self.element_lattice.bottom()
+            case "top" | "strict":
+                return self.element_lattice.top()
+            case _:
+                raise ValueError(
+                    "default mode should be one of [flexible, top, bottom, strict]"
+                )
+
+    @property
+    def upper_default(self):
+        match self.default_mode:
+            case "flexible" | "top":
+                return self.element_lattice.top()
+            case "bottom" | "strict":
+                return self.element_lattice.bottom()
+            case _:
+                raise ValueError(
+                    "default mode should be one of [flexible, top, bottom, strict]"
+                )
+
+    def top(self) -> MapLatticeValue:
+        """Returns the top element of the lattice."""
+        return LatticeTop
+
+    def bottom(self) -> MapLatticeValue:
+        """Returns the bottom element of the lattice."""
+        return LatticeBottom
+
+    def leq(
+        self,
+        t1: MapLatticeValue,
+        t2: MapLatticeValue,
+    ) -> bool:
+        """Returns True if `t1 <= t2` in the lattice."""
+
+        if t1 is self.bottom() or t2 is self.top():
+            return True
+        if t1 is self.top():
+            return t2 is self.top()
+        if t2 is self.bottom():
+            return t1 is self.bottom()
+        for k in set(t1).union(t2):
+            if not self.element_lattice.leq(
+                t1.get(k, self.lower_default), t2.get(k, self.upper_default)
+            ):
+                return False
+        return True
+
+    def join(
+        self,
+        t1: MapLatticeValue,
+        t2: MapLatticeValue,
+    ) -> MapLatticeValue:
+        """Returns the least upper bound of `t1` and `t2`."""
+
+        if t1 is self.top() or t2 is self.top():
+            return self.top()
+        if t1 is self.bottom():
+            return t2
+        if t2 is self.bottom():
+            return t1
+        return {
+            k: self.element_lattice.join(
+                t1.get(k, self.lower_default), t2.get(k, self.lower_default)
+            )
+            for k in set(t1).union(t2)
+        }
+
+    def meet(
+        self,
+        t1: MapLatticeValue,
+        t2: MapLatticeValue,
+    ) -> MapLatticeValue:
+        """Returns the greatest lower bound of `t1` and `t2`."""
+
+        if t1 is self.bottom() or t2 is self.bottom():
+            return self.bottom()
+        if t1 is self.top():
+            return t2
+        if t2 is self.top():
+            return t1
+        return {
+            k: self.element_lattice.meet(
+                t1.get(k, self.upper_default), t2.get(k, self.upper_default)
+            )
+            for k in set(t1).union(t2)
+        }
+
+
+@cache
+def maplattice(
+    lattice: Type[Lattice],
+    *,
+    default_mode: Literal["flexible", "top", "bottom", "strict"] = "flexible",
+) -> Type[Lattice]:
+    """Builds a map lattice class from a lattice class for map based analysis"""
+    name = f"Map{lattice.__name__}"
+
+    if getattr(lattice, "__origin__", None):
+        element_lattice_value = lattice.__args__[0]
+    else:
+        element_lattice_value = lattice.__orig_bases__[0].__args__[0]
+
+    def update_ns(ns):
+        ns.update(
+            {
+                "__module__": lattice.__module__,
+                "element_lattice": lattice(),
+                "default_mode": default_mode,
+            }
+        )
+        return ns
+
+    cls = types.new_class(
+        name,
+        (MapLattice[Dict[str, element_lattice_value]],),
+        None,
+        update_ns,
+    )
+    return cls
