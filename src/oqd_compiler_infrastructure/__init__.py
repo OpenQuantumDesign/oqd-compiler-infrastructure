@@ -28,6 +28,7 @@ from .lattice import (
     LatticeBottom,
     LatticeTop,
     PowersetLattice,
+    PowersetValue,
     maplattice,
 )
 from .rewriter import Chain, FixedPoint, RewriterBase
@@ -67,4 +68,5 @@ __all__ = [
     "cfg_to_dot",
     "CFGBlockAccumulator",
     "RelabelCFGBlocks",
+    "PowersetValue",
 ]
