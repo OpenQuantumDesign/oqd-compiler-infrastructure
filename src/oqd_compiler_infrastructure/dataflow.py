@@ -79,16 +79,6 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
     def merge(self, states: Iterable[LatticeValue]) -> LatticeValue:
         """Merges incoming states."""
 
-    @abstractmethod
-    def result(
-        self,
-        boundary: Dict[NodeLabelType, LatticeValue],
-        result: Dict[NodeLabelType, LatticeValue],
-        iterations: int,
-    ) -> DataflowResult[NodeLabelType, LatticeValue]:
-        """Maps boundary/result states onto in/out states."""
-        pass
-
     def merge_union(self, states: Iterable[LatticeValue]) -> LatticeValue:
         """Joins incoming states using the lattice's join operation."""
         states_list = list(states)
@@ -169,7 +159,9 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
                 if target not in worklist:
                     worklist.append(target)
 
-        return self.result(boundary, result, iterations)
+        return DataflowResult(
+            in_states=boundary, out_states=result, iterations=iterations
+        )
 
 
 class ForwardDataflowAnalysis(DataflowAnalysis[NodeLabelType, NodeType, LatticeValue]):
@@ -187,16 +179,6 @@ class ForwardDataflowAnalysis(DataflowAnalysis[NodeLabelType, NodeType, LatticeV
     ) -> Iterable[NodeLabelType]:
         return graph.successors(node)
 
-    def result(
-        self,
-        boundary: Dict[NodeLabelType, LatticeValue],
-        result: Dict[NodeLabelType, LatticeValue],
-        iterations: int,
-    ) -> DataflowResult[NodeLabelType, LatticeValue]:
-        return DataflowResult(
-            in_states=boundary, out_states=result, iterations=iterations
-        )
-
 
 class BackwardDataflowAnalysis(DataflowAnalysis[NodeLabelType, NodeType, LatticeValue]):
     """
@@ -212,13 +194,3 @@ class BackwardDataflowAnalysis(DataflowAnalysis[NodeLabelType, NodeType, Lattice
         self, graph: GraphProtocol[NodeLabelType, NodeType], node: NodeLabelType
     ) -> Iterable[NodeLabelType]:
         return graph.predecessors(node)
-
-    def result(
-        self,
-        boundary: Dict[NodeLabelType, LatticeValue],
-        result: Dict[NodeLabelType, LatticeValue],
-        iterations: int,
-    ) -> DataflowResult[NodeLabelType, LatticeValue]:
-        return DataflowResult(
-            in_states=result, out_states=boundary, iterations=iterations
-        )
