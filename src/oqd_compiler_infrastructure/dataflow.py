@@ -18,8 +18,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import deque
-from dataclasses import dataclass
 from typing import ClassVar, Dict, Generic, Iterable
+
+from pydantic import BaseModel, ConfigDict
 
 from .interface import GraphProtocol, NodeLabelType, NodeType
 from .lattice import Lattice, LatticeValue
@@ -27,12 +28,14 @@ from .lattice import Lattice, LatticeValue
 ########################################################################################
 
 
-@dataclass(frozen=True)
-class DataflowResult(Generic[NodeLabelType, LatticeValue]):
+class DataflowResult(BaseModel, Generic[NodeLabelType, NodeType, LatticeValue]):
     """
     The result of a dataflow analysis.
     """
 
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+    dataflow_analysis: DataflowAnalysis[NodeLabelType, NodeType, LatticeValue]
     in_states: Dict[NodeLabelType, LatticeValue]
     out_states: Dict[NodeLabelType, LatticeValue]
     iterations: int
@@ -124,8 +127,8 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
         if initial_state is None:
             initial_state = self.initial_state(nodes)
 
-        boundary = initial_state.copy()
-        result = initial_state.copy()
+        in_states = initial_state.copy()
+        out_states = initial_state.copy()
 
         worklist = deque(nodes)
         iterations = 0
@@ -135,33 +138,38 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
 
             if iterations > self.max_iterations:
                 raise AssertionError(
-                    f"DataflowAnalysis exceeded maximum number of iterations ({self.max_iterations}), current state:"
-                    f"{self.result(boundary, result, iterations)}"
+                    f"DataflowAnalysis exceeded maximum number of iterations ({self.max_iterations})"
                 )
 
             node = worklist.popleft()
 
+            # In[n] = merge_n(Out[source(n)])
             srcs = list(self.sources(graph, node))
             if srcs:
-                merged_input = self.merge(result[n] for n in srcs)
-            else:
-                merged_input = result[node]
+                merged_input = self.merge(out_states[n] for n in srcs)
 
-            if not self.lattice.equal(boundary[node], merged_input):
-                boundary[node] = merged_input
+                if not self.lattice.equal(in_states[node], merged_input):
+                    in_states[node] = merged_input
 
-            next_result = self.transfer(graph, node, merged_input, **kwargs)
-            if self.lattice.equal(result[node], next_result):
+            # Out[n] = transfer(In[n])
+            next_out_states = self.transfer(graph, node, in_states[node], **kwargs)
+            if self.lattice.equal(out_states[node], next_out_states):
                 continue
 
-            result[node] = next_result
+            # Out[n] changed => add target(n) to worklist
+            out_states[node] = next_out_states
             for target in self.targets(graph, node):
                 if target not in worklist:
                     worklist.append(target)
 
-        return DataflowResult(
-            in_states=boundary, out_states=result, iterations=iterations
+        result = DataflowResult(
+            dataflow_analysis=self,
+            in_states=in_states,
+            out_states=out_states,
+            iterations=iterations,
         )
+
+        return result
 
 
 class ForwardDataflowAnalysis(DataflowAnalysis[NodeLabelType, NodeType, LatticeValue]):
