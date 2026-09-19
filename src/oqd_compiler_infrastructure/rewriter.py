@@ -58,10 +58,10 @@ class Chain(RewriterBase):
     def children(self):
         return self.rules
 
-    def map(self, model):
+    def map(self, model, **kwargs):
         new_model = model
         for rule in self.rules:
-            new_model = rule(new_model)
+            new_model = rule(new_model, **kwargs)
         return new_model
 
 
@@ -85,11 +85,11 @@ class FixedPoint(RewriterBase):
     def children(self):
         return [self.rule]
 
-    def map(self, model):
+    def map(self, model, **kwargs):
         i = 0
         new_model = model
         while True:
-            _model = self.rule(new_model)
+            _model = self.rule(new_model, **kwargs)
 
             if _model == new_model or i >= self.max_iter:
                 return new_model

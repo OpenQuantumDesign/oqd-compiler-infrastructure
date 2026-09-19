@@ -32,6 +32,9 @@ class RuleBase(PassBase):
     This class represents a rule applied to an IR.
     """
 
+    def __init__(self, *, autoreplace_none=True):
+        self._autoreplace_none = autoreplace_none
+
     @property
     def children(self):
         return []
@@ -46,7 +49,7 @@ class RewriteRule(RuleBase):
         This code was inspired by [MLIR](https://github.com/llvm/llvm-project/blob/main/mlir/include/mlir/IR/PatternMatch.h#L246), [Bloqade-python](https://github.com/QuEraComputing/bloqade-python/blob/main/src/bloqade/ir/visitor.py#L34)
     """
 
-    def map(self, model):
+    def map(self, model, **kwargs):
         for cls in model.__class__.__mro__:
             map_func = getattr(self, "map_{}".format(cls.__name__), None)
             if map_func:
@@ -55,12 +58,15 @@ class RewriteRule(RuleBase):
         if not map_func:
             map_func = self.generic_map
 
-        return map_func(model)
+        new_model = map_func(model, **kwargs)
 
-    def generic_map(self, model):
+        if self._autoreplace_none and new_model is None:
+            return model
+
+        return new_model
+
+    def generic_map(self, model, **kwargs):
         return model
-
-    pass
 
 
 class ConversionRule(RuleBase):
@@ -73,10 +79,10 @@ class ConversionRule(RuleBase):
 
     def __init__(self):
         super().__init__()
-        self.operands = None
+        self._operands = None
 
-    def map(self, model):
-        operands = self.operands
+    def map(self, model, **kwargs):
+        operands = self._operands
 
         for cls in model.__class__.__mro__:
             map_func = getattr(self, "map_{}".format(cls.__name__), None)
@@ -86,18 +92,23 @@ class ConversionRule(RuleBase):
         if not map_func:
             map_func = self.generic_map
 
-        return map_func(model, operands=operands)
+        new_model = map_func(model, operands=operands, **kwargs)
 
-    def generic_map(self, model, operands):
+        if self._autoreplace_none and new_model is None:
+            return model
+
+        return new_model
+
+    def generic_map(self, model, operands, **kwargs):
         return model
 
-    def map_dict(self, model, operands):
+    def map_dict(self, model, operands, **kwargs):
         return operands
 
-    def map_tuple(self, model, operands):
+    def map_tuple(self, model, operands, **kwargs):
         return operands
 
-    def map_list(self, model, operands):
+    def map_list(self, model, operands, **kwargs):
         return operands
 
 

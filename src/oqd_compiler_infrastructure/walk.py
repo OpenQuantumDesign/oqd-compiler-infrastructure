@@ -41,7 +41,6 @@ class WalkBase(PassBase):
 
         self.rule = rule
         self.reverse = reverse
-        pass
 
     @staticmethod
     def controlled_reverse(iterable, reverse, *, restore_type=False):
@@ -55,10 +54,10 @@ class WalkBase(PassBase):
     def children(self):
         return [self.rule]
 
-    def map(self, model):
-        return self.walk(model)
+    def map(self, model, **kwargs):
+        return self.walk(model, **kwargs)
 
-    def walk(self, model):
+    def walk(self, model, **kwargs):
         for cls in model.__class__.__mro__:
             walk_func = getattr(self, "walk_{}".format(cls.__name__), None)
             if walk_func:
@@ -67,12 +66,10 @@ class WalkBase(PassBase):
         if not walk_func:
             walk_func = self.generic_walk
 
-        return walk_func(model)
+        return walk_func(model, **kwargs)
 
-    def generic_walk(self, model):
-        return self.rule(model)
-
-    pass
+    def generic_walk(self, model, **kwargs):
+        return self.rule(model, **kwargs)
 
 
 ########################################################################################
@@ -87,11 +84,11 @@ class Pre(WalkBase):
         This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L187), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/walk.jl#L3)
     """
 
-    def walk_dict(self, model):
-        new_model = self.rule(model)
+    def walk_dict(self, model, **kwargs):
+        new_model = self.rule(model, **kwargs)
 
         new_model = {
-            k: self(v)
+            k: self.walk(v, **kwargs)
             for k, v in self.controlled_reverse(new_model.items(), self.reverse)
         }
 
@@ -99,24 +96,30 @@ class Pre(WalkBase):
             k: v for k, v in self.controlled_reverse(new_model.items(), self.reverse)
         }
 
-    def walk_list(self, model):
-        new_model = self.rule(model)
+    def walk_list(self, model, **kwargs):
+        new_model = self.rule(model, **kwargs)
 
-        new_model = [self(e) for e in self.controlled_reverse(new_model, self.reverse)]
+        new_model = [
+            self.walk(e, **kwargs)
+            for e in self.controlled_reverse(new_model, self.reverse)
+        ]
 
         return self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
-    def walk_tuple(self, model):
-        new_model = self.rule(model)
+    def walk_tuple(self, model, **kwargs):
+        new_model = self.rule(model, **kwargs)
 
         new_model = tuple(
-            [self(e) for e in self.controlled_reverse(new_model, self.reverse)]
+            [
+                self.walk(e, **kwargs)
+                for e in self.controlled_reverse(new_model, self.reverse)
+            ]
         )
 
         return self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
-    def walk_VisitableBaseModel(self, model):
-        new_model = self.rule(model)
+    def walk_VisitableBaseModel(self, model, **kwargs):
+        new_model = self.rule(model, **kwargs)
 
         new_fields = {}
         for key in self.controlled_reverse(
@@ -124,17 +127,17 @@ class Pre(WalkBase):
         ):
             if key == "class_":
                 continue
-            new_fields[key] = self(getattr(new_model, key))
+            new_fields[key] = self.walk(getattr(new_model, key), **kwargs)
         new_model = new_model.__class__(**new_fields)
 
         return new_model
 
-    def walk_AST(self, model):
-        new_model = self.rule(model)
+    def walk_AST(self, model, **kwargs):
+        new_model = self.rule(model, **kwargs)
 
         new_fields = {}
         for key in self.controlled_reverse(new_model.__class__._fields, self.reverse):
-            new_fields[key] = self(getattr(new_model, key))
+            new_fields[key] = self.walk(getattr(new_model, key), **kwargs)
         new_model = new_model.__class__(**new_fields)
 
         return new_model
@@ -149,77 +152,83 @@ class Post(WalkBase):
         This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L183), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/walk.jl#L9)
     """
 
-    def walk_dict(self, model):
+    def walk_dict(self, model, **kwargs):
         new_model = {
-            k: self(v) for k, v in self.controlled_reverse(model.items(), self.reverse)
+            k: self.walk(v, **kwargs)
+            for k, v in self.controlled_reverse(model.items(), self.reverse)
         }
         new_model = {
             k: v for k, v in self.controlled_reverse(new_model.items(), self.reverse)
         }
 
         if isinstance(self.rule, ConversionRule):
-            self.rule.operands = new_model
-            new_model = self.rule(model)
+            self.rule._operands = new_model
+            new_model = self.rule(model, **kwargs)
         else:
-            new_model = self.rule(new_model)
+            new_model = self.rule(new_model, **kwargs)
 
         return new_model
 
-    def walk_list(self, model):
-        new_model = [self(e) for e in self.controlled_reverse(model, self.reverse)]
+    def walk_list(self, model, **kwargs):
+        new_model = [
+            self.walk(e, **kwargs) for e in self.controlled_reverse(model, self.reverse)
+        ]
         new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
         if isinstance(self.rule, ConversionRule):
-            self.rule.operands = new_model
-            new_model = self.rule(model)
+            self.rule._operands = new_model
+            new_model = self.rule(model, **kwargs)
         else:
-            new_model = self.rule(new_model)
+            new_model = self.rule(new_model, **kwargs)
 
         return new_model
 
-    def walk_tuple(self, model):
+    def walk_tuple(self, model, **kwargs):
         new_model = tuple(
-            [self(e) for e in self.controlled_reverse(model, self.reverse)]
+            [
+                self.walk(e, **kwargs)
+                for e in self.controlled_reverse(model, self.reverse)
+            ]
         )
         new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
         if isinstance(self.rule, ConversionRule):
-            self.rule.operands = new_model
-            new_model = self.rule(model)
+            self.rule._operands = new_model
+            new_model = self.rule(model, **kwargs)
         else:
-            new_model = self.rule(new_model)
+            new_model = self.rule(new_model, **kwargs)
 
         return new_model
 
-    def walk_VisitableBaseModel(self, model):
+    def walk_VisitableBaseModel(self, model, **kwargs):
         new_fields = {}
         for key in self.controlled_reverse(
             model.__class__.model_fields.keys(), self.reverse
         ):
             if key == "class_":
                 continue
-            new_fields[key] = self(getattr(model, key))
+            new_fields[key] = self.walk(getattr(model, key), **kwargs)
 
         if isinstance(self.rule, ConversionRule):
-            self.rule.operands = new_fields
-            new_model = self.rule(model)
+            self.rule._operands = new_fields
+            new_model = self.rule(model, **kwargs)
         else:
             new_model = model.__class__(**new_fields)
-            new_model = self.rule(new_model)
+            new_model = self.rule(new_model, **kwargs)
 
         return new_model
 
-    def walk_AST(self, model):
+    def walk_AST(self, model, **kwargs):
         new_fields = {}
         for key in self.controlled_reverse(model.__class__._fields, self.reverse):
-            new_fields[key] = self(getattr(model, key))
+            new_fields[key] = self.walk(getattr(model, key), **kwargs)
 
         if isinstance(self.rule, ConversionRule):
-            self.rule.operands = new_fields
-            new_model = self.rule(model)
+            self.rule._operands = new_fields
+            new_model = self.rule(model, **kwargs)
         else:
             new_model = model.__class__(**new_fields)
-            new_model = self.rule(new_model)
+            new_model = self.rule(new_model, **kwargs)
 
         return new_model
 
@@ -235,53 +244,53 @@ class Level(WalkBase):
         self.stack = []
         self.initial = True
 
-    def generic_walk(self, model):
+    def generic_walk(self, model, **kwargs):
         if self.initial:
             self.stack.append(model)
             self.initial = False
 
-        self.rule(self.stack.pop(0))
+        self.rule(self.stack.pop(0), **kwargs)
         if self.stack:
-            self(self.stack[0])
+            self.walk(self.stack[0], **kwargs)
         return model
 
-    def walk_list(self, model):
-        if self.initial:
-            self.stack.append(model)
-            self.initial = False
-
-        self.stack.extend(self.controlled_reverse(model, self.reverse))
-
-        self.rule(self.stack.pop(0))
-        if self.stack:
-            self(self.stack[0])
-        return model
-
-    def walk_tuple(self, model):
+    def walk_list(self, model, **kwargs):
         if self.initial:
             self.stack.append(model)
             self.initial = False
 
         self.stack.extend(self.controlled_reverse(model, self.reverse))
 
-        self.rule(self.stack.pop(0))
+        self.rule(self.stack.pop(0), **kwargs)
         if self.stack:
-            self(self.stack[0])
+            self.walk(self.stack[0], **kwargs)
         return model
 
-    def walk_dict(self, model):
+    def walk_tuple(self, model, **kwargs):
+        if self.initial:
+            self.stack.append(model)
+            self.initial = False
+
+        self.stack.extend(self.controlled_reverse(model, self.reverse))
+
+        self.rule(self.stack.pop(0), **kwargs)
+        if self.stack:
+            self.walk(self.stack[0], **kwargs)
+        return model
+
+    def walk_dict(self, model, **kwargs):
         if self.initial:
             self.stack.append(model)
             self.initial = False
 
         self.stack.extend(self.controlled_reverse(model.values(), self.reverse))
 
-        self.rule(self.stack.pop(0))
+        self.rule(self.stack.pop(0), **kwargs)
         if self.stack:
-            self(self.stack[0])
+            self.walk(self.stack[0], **kwargs)
         return model
 
-    def walk_VisitableBaseModel(self, model):
+    def walk_VisitableBaseModel(self, model, **kwargs):
         if self.initial:
             self.stack.append(model)
             self.initial = False
@@ -297,12 +306,12 @@ class Level(WalkBase):
             )
         )
 
-        self.rule(self.stack.pop(0))
+        self.rule(self.stack.pop(0), **kwargs)
         if self.stack:
-            self(self.stack[0])
+            self.walk(self.stack[0], **kwargs)
         return model
 
-    def walk_AST(self, model):
+    def walk_AST(self, model, **kwargs):
         if self.initial:
             self.stack.append(model)
             self.initial = False
@@ -314,9 +323,9 @@ class Level(WalkBase):
             )
         )
 
-        self.rule(self.stack.pop(0))
+        self.rule(self.stack.pop(0), **kwargs)
         if self.stack:
-            self(self.stack[0])
+            self.walk(self.stack[0], **kwargs)
         return model
 
 
@@ -325,55 +334,64 @@ class In(WalkBase):
     This class represents the in order tree traversal algorithm that walks through an AST.
     """
 
-    def generic_walk(self, model):
-        self.rule(model)
+    def generic_walk(self, model, **kwargs):
+        self.rule(model, **kwargs)
         return model
 
-    def walk_list(self, model):
+    def walk_list(self, model, **kwargs):
         for e in self.controlled_reverse(model, self.reverse, restore_type=True)[:-1]:
-            self(e)
+            self.walk(e, **kwargs)
 
-        self.rule(model)
+        self.rule(model, **kwargs)
         if model:
-            self(self.controlled_reverse(model, self.reverse, restore_type=True)[-1])
+            self.walk(
+                self.controlled_reverse(model, self.reverse, restore_type=True)[-1],
+                **kwargs,
+            )
         return model
 
-    def walk_tuple(self, model):
+    def walk_tuple(self, model, **kwargs):
         for e in self.controlled_reverse(model, self.reverse, restore_type=True)[:-1]:
-            self(e)
+            self.walk(e, **kwargs)
 
-        self.rule(model)
+        self.rule(model, **kwargs)
         if model:
-            self(self.controlled_reverse(model, self.reverse, restore_type=True)[-1])
+            self.walk(
+                self.controlled_reverse(model, self.reverse, restore_type=True)[-1],
+                **kwargs,
+            )
         return model
 
-    def walk_dict(self, model):
+    def walk_dict(self, model, **kwargs):
         for v in list(self.controlled_reverse(model.values(), self.reverse))[:-1]:
-            self(v)
+            self.walk(v, **kwargs)
 
-        self.rule(model)
+        self.rule(model, **kwargs)
         if model:
-            self(list(self.controlled_reverse(model.values(), self.reverse))[-1])
+            self.walk(
+                list(self.controlled_reverse(model.values(), self.reverse))[-1],
+                **kwargs,
+            )
         return model
 
-    def walk_VisitableBaseModel(self, model):
+    def walk_VisitableBaseModel(self, model, **kwargs):
         keys = [k for k in model.__class__.model_fields.keys() if k != "class_"]
         keys = self.controlled_reverse(keys, self.reverse, restore_type=True)
         for k in keys[:-1]:
-            self(getattr(model, k))
+            self.walk(getattr(model, k), **kwargs)
 
-        self.rule(model)
+        self.rule(model, **kwargs)
         if keys:
-            self(getattr(model, keys[-1]))
+            self.walk(getattr(model, keys[-1]), **kwargs)
         return model
 
-    def walk_AST(self, model):
+    def walk_AST(self, model, **kwargs):
         keys = [k for k in model.__class__._fields if k != "class_"]
         keys = self.controlled_reverse(keys, self.reverse, restore_type=True)
         for k in keys[:-1]:
-            self(getattr(model, k))
+            self.walk(getattr(model, k), **kwargs)
 
-        self.rule(model)
+        self.rule(model, **kwargs)
         if keys:
-            self(getattr(model, keys[-1]))
+            self.walk(getattr(model, keys[-1]), **kwargs)
         return model

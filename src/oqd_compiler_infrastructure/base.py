@@ -28,25 +28,15 @@ class PassBase(ABC):
     Abstract base class for passes.
     """
 
-    def __init__(self):
-        pass
-
     @property
     @abstractmethod
-    def children(self):
-        pass
+    def children(self): ...
 
-    def __call__(self, model):
-        self._model = model
-
-        model = self.map(model)
-        if model is None:
-            model = self._model
-        return model
+    def __call__(self, model, **kwargs):
+        return self.map(model, **kwargs)
 
     @abstractmethod
-    def map(self, model):
-        pass
+    def map(self, model, **kwargs): ...
 
     def __repr__(self):
         return "{}({})".format(
