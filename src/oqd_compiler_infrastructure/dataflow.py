@@ -19,10 +19,18 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass
-from typing import ClassVar, Dict, Generic, Iterable
+from functools import wraps
+from typing import Callable, ClassVar, Dict, Generic, Iterable
 
+from .error import DefaultErrorCollector
 from .interface import GraphProtocol, NodeLabelType, NodeType
 from .lattice import Lattice, LatticeValue
+
+########################################################################################
+
+
+class DataflowErrorCollector(DefaultErrorCollector): ...
+
 
 ########################################################################################
 
@@ -47,6 +55,8 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
 
     def __init__(self, *, max_iterations=1000000):
         super().__init__()
+
+        self._err_collector = DataflowErrorCollector()
 
         self.max_iterations = max_iterations
 
@@ -74,6 +84,31 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
     ) -> LatticeValue:
         """Returns the state of a given node after transfer."""
         pass
+
+    @staticmethod
+    def _wrap_transfer(f: Callable):
+        @wraps(f)
+        def wrapped_f(self, graph, node, state_in, **kwargs):
+            try:
+                state_out = f(self, graph, node, state_in)
+            except Exception as e:
+                self._err_collector.append(e)
+                state_out = state_in.copy()
+
+            return state_out
+
+        return wrapped_f
+
+    @_wrap_transfer
+    def wrapped_transfer(
+        self,
+        graph: GraphProtocol[NodeLabelType, NodeType],
+        node: NodeLabelType,
+        state_in: LatticeValue,
+        **kwargs,
+    ) -> LatticeValue:
+        """Returns the state of a given node after transfer."""
+        return self.transfer(graph, node, state_in, **kwargs)
 
     @abstractmethod
     def merge(self, states: Iterable[LatticeValue]) -> LatticeValue:
@@ -150,7 +185,7 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
             if not self.lattice.equal(boundary[node], merged_input):
                 boundary[node] = merged_input
 
-            next_result = self.transfer(graph, node, merged_input, **kwargs)
+            next_result = self.wrapped_transfer(graph, node, merged_input, **kwargs)
             if self.lattice.equal(result[node], next_result):
                 continue
 
@@ -158,6 +193,8 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
             for target in self.targets(graph, node):
                 if target not in worklist:
                     worklist.append(target)
+
+        self._err_collector.report_errors()
 
         return DataflowResult(
             in_states=boundary, out_states=result, iterations=iterations
