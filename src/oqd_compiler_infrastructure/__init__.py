@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .base import PassBase
-from .cfg import CFG, CFGBlock, CFGBlockAccumulator, cfg_to_dot
+from .cfg import CFG, CFGBlock, CFGBlockAccumulator, RelabelCFGBlocks, cfg_to_dot
 from .dataflow import (
     BackwardDataflowAnalysis,
     DataflowAnalysis,
@@ -28,6 +28,7 @@ from .lattice import (
     LatticeBottom,
     LatticeTop,
     PowersetLattice,
+    PowersetLatticeValue,
     maplattice,
 )
 from .rewriter import Chain, FixedPoint, RewriterBase
@@ -66,4 +67,6 @@ __all__ = [
     "CFGBlock",
     "cfg_to_dot",
     "CFGBlockAccumulator",
+    "RelabelCFGBlocks",
+    "PowersetLatticeValue",
 ]
