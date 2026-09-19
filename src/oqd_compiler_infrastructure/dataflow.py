@@ -49,6 +49,10 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
 
     lattice: ClassVar[Lattice[LatticeValue]]
 
+    def __getattr__(self, name):
+        # Enable DataflowAnalysis to use methods from associated lattice directly as if it were a method of DataflowAnalysis
+        return self.lattice.__getattribute__(name)
+
     def __init__(self, *, max_iterations=1000000):
         super().__init__()
 
