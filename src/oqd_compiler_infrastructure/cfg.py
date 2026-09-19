@@ -183,6 +183,12 @@ class CFGtoDot(RewriteRule):
         if len(label) > self.max_lines and self.max_lines >= 0:
             label = label[: self.max_lines] + ["..."]
 
+        if model.tags:
+            label = label + [
+                f"{' tags ':-^24}",
+                *[f"{k}: {v}" for k, v in model.tags.items()],
+            ]
+
         self.dot.node(
             str(model.register_id),
             f"{'Branch' if model.edge_labels else ''} Block #{model.register_id}\n{'-' * 24}\n"
