@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import deque
+from functools import reduce
 from typing import ClassVar, Dict, Generic, Iterable
 
 from pydantic import BaseModel, ConfigDict
@@ -84,23 +85,11 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
 
     def merge_union(self, states: Iterable[LatticeValue]) -> LatticeValue:
         """Joins incoming states using the lattice's join operation."""
-        states_list = list(states)
-        if not states_list:
-            return self.lattice.bottom()
-        merged = states_list[0]
-        for state in states_list[1:]:
-            merged = self.lattice.join(merged, state)
-        return merged
+        return reduce(self.lattice.join, states, self.lattice.bottom())
 
     def merge_intersection(self, states: Iterable[LatticeValue]) -> LatticeValue:
         """Meets incoming states using the lattice's meet operation."""
-        states_list = list(states)
-        if not states_list:
-            return self.lattice.top()
-        merged = states_list[0]
-        for state in states_list[1:]:
-            merged = self.lattice.meet(merged, state)
-        return merged
+        return reduce(self.lattice.meet, states, self.lattice.top())
 
     def initial_state(self, nodes) -> Dict[NodeLabelType, LatticeValue]:
         """Initial state of the nodes in the CFG."""
