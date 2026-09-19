@@ -38,15 +38,20 @@ class CFGBlock(VisitableBaseModel):
     edge_labels: Dict[str, int] = Field(default_factory=dict)
     tags: Dict[str, str] = Field(default_factory=dict)
 
-    def add_succ(self, succ: int, label: str | None = None) -> None:
-        if succ not in self.succs:
-            self.succs.add(succ)
-        if label is not None:
+    def add_succ(self, succ: int, label: str | List[str] | None = None) -> None:
+        self.succs.add(succ)
+
+        if label is None:
+            return
+
+        if isinstance(label, list):
+            for _label in label:
+                self.edge_labels[_label] = succ
+        else:
             self.edge_labels[label] = succ
 
     def add_pred(self, pred: int) -> None:
-        if pred not in self.preds:
-            self.preds.add(pred)
+        self.preds.add(pred)
 
     def add_preds(self, preds: Iterable[int]) -> None:
         for pred in preds:
