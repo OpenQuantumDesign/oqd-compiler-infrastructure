@@ -42,8 +42,15 @@ class ErrorCollector(ABC, MutableSequence[Exception], metaclass=ErrorCollectorMe
         self.errors.insert(idx, value)
 
     def __repr__(self):
-        error_report = "\n  " + "\n  ".join(
-            map(self.error_message_formatter, self.errors)
+        error_report = (
+            f"\n{f' {self.__class__.__name__} Report ':=^100}\n"
+            + "\n".join(
+                [
+                    self.error_message_formatter(n + 1, e)
+                    for n, e in enumerate(self.errors)
+                ]
+            )
+            + f"\n{'=' * 100}\n"
         )
 
         return error_report
@@ -52,16 +59,16 @@ class ErrorCollector(ABC, MutableSequence[Exception], metaclass=ErrorCollectorMe
         return self.__repr__()
 
     @abstractmethod
-    def error_message_formatter(self, error: Exception) -> str: ...
+    def error_message_formatter(self, idx: int, error: Exception) -> str: ...
 
     @abstractmethod
-    def report_errors(self): ...
+    def report_errors(self, *args, **kwargs): ...
 
 
 class DefaultErrorCollector(ErrorCollector):
-    def error_message_formatter(self, error: Exception) -> str:
-        return f"\033[1;31m{error.__class__.__name__}\033[0m: {str(error)}"
+    def error_message_formatter(self, idx: int, error: Exception) -> str:
+        return f"({idx}) {error.__class__.__name__}: {str(error)}"
 
-    def report_errors(self):
+    def report_errors(self, *args, **kwargs):
         if self:
             raise self._error_class(self.__repr__())

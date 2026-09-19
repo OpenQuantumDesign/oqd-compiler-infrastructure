@@ -18,9 +18,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import deque
-from dataclasses import dataclass
 from functools import wraps
-from typing import Callable, ClassVar, Dict, Generic, Iterable
+from typing import Any, Callable, ClassVar, Dict, Generic, Iterable
+
+from pydantic import BaseModel, ConfigDict
 
 from .error import DefaultErrorCollector
 from .interface import GraphProtocol, NodeLabelType, NodeType
@@ -29,21 +30,53 @@ from .lattice import Lattice, LatticeValue
 ########################################################################################
 
 
-class DataflowErrorCollector(DefaultErrorCollector): ...
+class DataflowErrorCollector(DefaultErrorCollector):
+    def report_errors(self, result: DataflowResult):
+        error_report = self.__repr__().splitlines()
+        error_report.insert(-1, str(result))
+        error_report = "\n".join(error_report)
+
+        if self:
+            raise self._error_class(error_report)
 
 
 ########################################################################################
 
 
-@dataclass(frozen=True)
-class DataflowResult(Generic[NodeLabelType, LatticeValue]):
+class DataflowResult(BaseModel):
     """
     The result of a dataflow analysis.
     """
 
-    in_states: Dict[NodeLabelType, LatticeValue]
-    out_states: Dict[NodeLabelType, LatticeValue]
+    model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
+
+    dataflow_analysis: DataflowAnalysis
+    in_states: Dict[Any, Any]
+    out_states: Dict[Any, Any]
     iterations: int
+
+    def __str__(self):
+
+        in_states = "\n".join(
+            map(
+                lambda x: "  " + x,
+                [f"{node}={state}" for node, state in self.in_states.items()],
+            )
+        )
+        out_states = "\n".join(
+            map(
+                lambda x: "  " + x,
+                [f"{node}={state}" for node, state in self.out_states.items()],
+            )
+        )
+
+        return (
+            f"{' Dataflow Result ':-^100}\n"
+            f"DataflowAnalysis: {self.dataflow_analysis.__class__.__name__}\n"
+            f"In: \n{in_states}\n"
+            f"Out: \n{out_states}\n"
+            f"Iterations: {self.iterations}"
+        )
 
 
 class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
@@ -169,10 +202,12 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
             iterations += 1
 
             if iterations > self.max_iterations:
-                raise AssertionError(
-                    f"DataflowAnalysis exceeded maximum number of iterations ({self.max_iterations}), current state:"
-                    f"{self.result(boundary, result, iterations)}"
+                self._err_collector.append(
+                    AssertionError(
+                        f"DataflowAnalysis exceeded maximum number of iterations (max_iterations={self.max_iterations})"
+                    )
                 )
+                break
 
             node = worklist.popleft()
 
@@ -194,11 +229,15 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
                 if target not in worklist:
                     worklist.append(target)
 
-        self._err_collector.report_errors()
-
-        return DataflowResult(
-            in_states=boundary, out_states=result, iterations=iterations
+        result = DataflowResult(
+            dataflow_analysis=self,
+            in_states=boundary,
+            out_states=result,
+            iterations=iterations,
         )
+        self._err_collector.report_errors(result)
+
+        return result
 
 
 class ForwardDataflowAnalysis(DataflowAnalysis[NodeLabelType, NodeType, LatticeValue]):
