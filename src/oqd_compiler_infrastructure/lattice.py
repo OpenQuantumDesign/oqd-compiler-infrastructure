@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import types
 from abc import ABC, abstractmethod
-from functools import cache
-from typing import ClassVar, Dict, Generic, Literal, Set, Type, TypeVar
+from functools import cache, reduce
+from typing import ClassVar, Dict, Generic, Iterable, Literal, Set, Type, TypeVar
 
 from .meta import Singleton
 
@@ -85,6 +85,22 @@ class Lattice(ABC, Generic[LatticeValue], metaclass=LatticeMeta):
     def equal(self, t1: LatticeValue, t2: LatticeValue) -> bool:
         """Returns True if two values are equal in the lattice."""
         return self.leq(t1, t2) and self.leq(t2, t1)
+
+    def merge_join(self, values: Iterable[LatticeValue]) -> LatticeValue:
+        """Returns the least upper bound of a set of lattice values."""
+        return reduce(self.join, values, self.bottom())
+
+    def merge_union(self, values: Iterable[LatticeValue]) -> LatticeValue:
+        """Returns the least upper bound of a set of lattice values, alias of merge_join"""
+        return reduce(self.join, values, self.bottom())
+
+    def merge_meet(self, values: Iterable[LatticeValue]) -> LatticeValue:
+        """Returns the greatest lower bound of a set of lattice values."""
+        return reduce(self.meet, values, self.top())
+
+    def merge_intersection(self, values: Iterable[LatticeValue]) -> LatticeValue:
+        """Returns the greatest lower bound of a set of lattice values, alias of merge_meet"""
+        return reduce(self.meet, values, self.top())
 
 
 class LatticeBase(Lattice[LatticeValue]):

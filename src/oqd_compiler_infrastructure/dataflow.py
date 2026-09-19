@@ -81,15 +81,7 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
 
     @abstractmethod
     def merge(self, states: Iterable[LatticeValue]) -> LatticeValue:
-        """Merges incoming states."""
-
-    def merge_union(self, states: Iterable[LatticeValue]) -> LatticeValue:
-        """Joins incoming states using the lattice's join operation."""
-        return reduce(self.lattice.join, states, self.lattice.bottom())
-
-    def merge_intersection(self, states: Iterable[LatticeValue]) -> LatticeValue:
-        """Meets incoming states using the lattice's meet operation."""
-        return reduce(self.lattice.meet, states, self.lattice.top())
+        """Specify merge operation for incoming states, such as lattice.merge_meet and lattice.merge_join."""
 
     def initial_state(self, nodes) -> Dict[NodeLabelType, LatticeValue]:
         """Initial state of the nodes in the CFG."""
