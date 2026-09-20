@@ -175,7 +175,7 @@ class LatticeBase(Lattice[LatticeValue]):
 
 
 SetElementTypeVar = TypeVar("SetElementTypeVar")
-PowersetLatticeValue = Set[SetElementTypeVar] | LatticeTop
+PowersetLatticeValue = Set[SetElementTypeVar] | Type[LatticeTop]
 
 
 class PowersetLattice(Lattice[PowersetLatticeValue]):
