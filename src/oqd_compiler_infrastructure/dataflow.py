@@ -87,6 +87,15 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
     def merge(self, states: Iterable[LatticeValue]) -> LatticeValue:
         """Specify merge operation for incoming states, such as lattice.merge_meet and lattice.merge_join."""
 
+    def result(self, in_states, out_states, iterations):
+        """ "Method for specifying result format for the dataflow analysis"""
+        return DataflowResult(
+            dataflow_analysis=self,
+            in_states=in_states,
+            out_states=out_states,
+            iterations=iterations,
+        )
+
     def initial_state(self, nodes) -> Dict[NodeLabelType, LatticeValue]:
         """Initial state of the nodes in the CFG."""
         return {node: self.lattice.top() for node in nodes}
@@ -147,8 +156,7 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
                 if target not in worklist:
                     worklist.append(target)
 
-        result = DataflowResult(
-            dataflow_analysis=self,
+        result = self.result(
             in_states=in_states,
             out_states=out_states,
             iterations=iterations,
