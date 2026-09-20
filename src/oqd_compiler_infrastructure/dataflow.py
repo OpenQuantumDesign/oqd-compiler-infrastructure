@@ -18,7 +18,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import deque
-from functools import reduce
 from typing import ClassVar, Dict, Generic, Iterable
 
 from pydantic import BaseModel, ConfigDict
@@ -37,6 +36,7 @@ class DataflowResult(BaseModel, Generic[NodeLabelType, NodeType, LatticeValue]):
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
     dataflow_analysis: DataflowAnalysis[NodeLabelType, NodeType, LatticeValue]
+    graph: GraphProtocol[NodeLabelType, LatticeValue]
     in_states: Dict[NodeLabelType, LatticeValue]
     out_states: Dict[NodeLabelType, LatticeValue]
     iterations: int
@@ -87,10 +87,17 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
     def merge(self, states: Iterable[LatticeValue]) -> LatticeValue:
         """Specify merge operation for incoming states, such as lattice.merge_meet and lattice.merge_join."""
 
-    def result(self, in_states, out_states, iterations):
+    def result(
+        self,
+        graph: GraphProtocol[NodeLabelType, NodeType],
+        in_states: Dict[NodeLabelType, LatticeValue],
+        out_states: Dict[NodeLabelType, LatticeValue],
+        iterations: int,
+    ) -> DataflowResult:
         """ "Method for specifying result format for the dataflow analysis"""
         return DataflowResult(
             dataflow_analysis=self,
+            graph=graph,
             in_states=in_states,
             out_states=out_states,
             iterations=iterations,
@@ -157,6 +164,7 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
                     worklist.append(target)
 
         result = self.result(
+            graph=graph,
             in_states=in_states,
             out_states=out_states,
             iterations=iterations,
