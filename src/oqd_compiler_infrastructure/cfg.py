@@ -34,7 +34,7 @@ class CFGBlock(VisitableBaseModel):
     stmts: List[VisitableBaseModel] = Field(default_factory=list)
     preds: Set[int] = Field(default_factory=set)
     succs: Set[int] = Field(default_factory=set)
-    exit_nodes: List[int] = Field(default_factory=list)
+    exit_nodes: Set[int] = Field(default_factory=set)
     edge_labels: Dict[str, int] = Field(default_factory=dict)
     tags: Dict[str, str] = Field(default_factory=dict)
 
