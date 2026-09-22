@@ -45,13 +45,30 @@ class DataflowResult(BaseModel, Generic[NodeLabelType, NodeType, LatticeValue]):
 class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
     """
     Base class that defines what every dataflow analysis must implement.
+
+    Attributes:
+        lattice ClassVar[Lattice[LatticeValue]]: Lattice equipped to the DataflowAnalsis.
+
+
+    Note:
+        lattice methods are accessible from DataflowAnalysis as they are forwarded by the
+        defined `__getattr__` method.
+
     """
 
     lattice: ClassVar[Lattice[LatticeValue]]
 
     def __getattr__(self, name):
         # Enable DataflowAnalysis to use methods from associated lattice directly as if it were a method of DataflowAnalysis
-        return self.lattice.__getattribute__(name)
+
+        try:
+            return getattr(self.lattice, name)
+        except AttributeError:
+            pass
+
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{name}'"
+        )
 
     def __init__(self, *, max_iterations=1000000):
         super().__init__()
@@ -203,3 +220,6 @@ class BackwardDataflowAnalysis(DataflowAnalysis[NodeLabelType, NodeType, Lattice
         self, graph: GraphProtocol[NodeLabelType, NodeType], node: NodeLabelType
     ) -> Iterable[NodeLabelType]:
         return graph.predecessors(node)
+
+
+"""TypeVar for node label of graph protocol"""
