@@ -17,7 +17,7 @@ from __future__ import annotations
 import types
 from abc import ABC, abstractmethod
 from functools import cache, reduce
-from typing import ClassVar, Dict, Generic, Iterable, Literal, Set, Type, TypeVar
+from typing import ClassVar, Dict, Generic, Iterable, Literal, Set, Type, TypeVar, Union
 
 from .meta import Singleton
 
@@ -43,6 +43,7 @@ class LatticeBottom(LatticeTop):
 
 
 LatticeValue = TypeVar("LatticeValue")
+"""TypeVar for lattice values."""
 
 
 ########################################################################################
@@ -174,37 +175,40 @@ class LatticeBase(Lattice[LatticeValue]):
 ########################################################################################
 
 
+class PowersetLatticeTop(LatticeTop): ...
+
+
 SetElementTypeVar = TypeVar("SetElementTypeVar")
-PowersetLatticeValue = Set[SetElementTypeVar] | Type[LatticeTop]
+PowersetLatticeValue = Set[SetElementTypeVar] | Type[PowersetLatticeTop]
 
 
 class PowersetLattice(Lattice[PowersetLatticeValue]):
     def top(self) -> PowersetLatticeValue:
-        return LatticeTop
+        return PowersetLatticeTop
 
     def bottom(self) -> PowersetLatticeValue:
         return set()
 
     def leq(self, t1: PowersetLatticeValue, t2: PowersetLatticeValue) -> bool:
-        if t2 is LatticeTop:
+        if t2 is self.top():
             return True
-        if t1 is LatticeTop:
+        if t1 is self.top():
             return False
         return t1 <= t2
 
     def join(
         self, t1: PowersetLatticeValue, t2: PowersetLatticeValue
     ) -> PowersetLatticeValue:
-        if t1 is LatticeTop or t2 is LatticeTop:
-            return LatticeTop
+        if t1 is self.top() or t2 is self.top():
+            return self.top()
         return t1 | t2
 
     def meet(
         self, t1: PowersetLatticeValue, t2: PowersetLatticeValue
     ) -> PowersetLatticeValue:
-        if t1 is LatticeTop:
+        if t1 is self.top():
             return t2
-        if t2 is LatticeTop:
+        if t2 is self.top():
             return t1
         return t1 & t2
 
@@ -212,7 +216,13 @@ class PowersetLattice(Lattice[PowersetLatticeValue]):
 ########################################################################################
 
 
-MapLatticeValue = Dict[str, LatticeValue]
+class MapLatticeTop(LatticeTop): ...
+
+
+class MapLatticeBottom(MapLatticeTop): ...
+
+
+MapLatticeValue = Union[Dict[str, LatticeValue], Type[MapLatticeTop]]
 
 
 class MapLattice(Lattice[MapLatticeValue]):
@@ -250,11 +260,11 @@ class MapLattice(Lattice[MapLatticeValue]):
 
     def top(self) -> MapLatticeValue:
         """Returns the top element of the lattice."""
-        return LatticeTop
+        return MapLatticeTop
 
     def bottom(self) -> MapLatticeValue:
         """Returns the bottom element of the lattice."""
-        return LatticeBottom
+        return MapLatticeBottom
 
     def leq(
         self,
@@ -343,7 +353,7 @@ def maplattice(
 
     cls = types.new_class(
         name,
-        (MapLattice[Dict[str, element_lattice_value]],),
+        (MapLattice[MapLatticeValue[element_lattice_value]],),
         None,
         update_ns,
     )
