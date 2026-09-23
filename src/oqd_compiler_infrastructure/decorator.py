@@ -150,7 +150,7 @@ def gen_rewrite_pass(
             return _func(
                 *self._args[:method],
                 model,
-                *self._args[method + 1 :],
+                *self._args[method:],
                 **self._kwargs,
             )
 
@@ -222,7 +222,7 @@ def gen_conversion_pass(
                 *self._args[:method],
                 model,
                 operands,
-                *self._args[method + 1 :],
+                *self._args[method:],
                 **self._kwargs,
             )
 
