@@ -164,7 +164,7 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
             # In[n] = merge_n(Out[source(n)])
             srcs = list(self.sources(graph, node))
             if srcs:
-                merged_input = self.merge(out_states[n] for n in srcs)
+                merged_input = self.merge([out_states[n] for n in srcs])
 
                 if not self.lattice.equal(in_states[node], merged_input):
                     in_states[node] = merged_input
