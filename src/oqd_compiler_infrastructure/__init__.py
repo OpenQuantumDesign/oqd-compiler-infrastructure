@@ -27,6 +27,8 @@ from .lattice import (
     LatticeBase,
     LatticeBottom,
     LatticeTop,
+    MapLattice,
+    MapLatticeValue,
     PowersetLattice,
     PowersetLatticeValue,
     maplattice,
@@ -69,4 +71,6 @@ __all__ = [
     "CFGBlockAccumulator",
     "RelabelCFGBlocks",
     "PowersetLatticeValue",
+    "MapLattice",
+    "MapLatticeValue",
 ]
