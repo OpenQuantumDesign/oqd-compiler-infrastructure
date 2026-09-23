@@ -18,6 +18,8 @@ from oqd_compiler_infrastructure import (
     LatticeBase,
     LatticeBottom,
     LatticeTop,
+    MapLatticeBottom,
+    MapLatticeTop,
     maplattice,
 )
 
@@ -59,7 +61,7 @@ class Testmaplattice:
         return maplattice(LatticeBase)()
 
     def test_bottom(self, map_lattice):
-        assert map_lattice.bottom() == LatticeBottom
+        assert map_lattice.bottom() == MapLatticeBottom
 
     def test_leq_lhs_with_missing_keys(self, map_lattice):
         left = {"x": B}

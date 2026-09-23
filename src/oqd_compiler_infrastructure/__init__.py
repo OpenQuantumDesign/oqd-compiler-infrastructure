@@ -29,8 +29,11 @@ from .lattice import (
     LatticeBottom,
     LatticeTop,
     MapLattice,
+    MapLatticeBottom,
+    MapLatticeTop,
     MapLatticeValue,
     PowersetLattice,
+    PowersetLatticeTop,
     PowersetLatticeValue,
     maplattice,
 )
@@ -77,4 +80,7 @@ __all__ = [
     "gen_conversion_pass",
     "gen_pass",
     "gen_rewrite_pass",
+    "MapLatticeBottom",
+    "MapLatticeTop",
+    "PowersetLatticeTop",
 ]
