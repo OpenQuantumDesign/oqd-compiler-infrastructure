@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from oqd_compiler_infrastructure.base import PassBase
-from oqd_compiler_infrastructure.rule import ConversionRule
+from oqd_compiler_infrastructure.rule import ConversionRuleBase
 
 ########################################################################################
 
@@ -41,7 +41,6 @@ class WalkBase(PassBase):
 
         self.rule = rule
         self.reverse = reverse
-        pass
 
     @staticmethod
     def controlled_reverse(iterable, reverse, *, restore_type=False):
@@ -71,8 +70,6 @@ class WalkBase(PassBase):
 
     def generic_walk(self, model):
         return self.rule(model)
-
-    pass
 
 
 ########################################################################################
@@ -157,7 +154,7 @@ class Post(WalkBase):
             k: v for k, v in self.controlled_reverse(new_model.items(), self.reverse)
         }
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_model
             new_model = self.rule(model)
         else:
@@ -169,7 +166,7 @@ class Post(WalkBase):
         new_model = [self(e) for e in self.controlled_reverse(model, self.reverse)]
         new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_model
             new_model = self.rule(model)
         else:
@@ -183,7 +180,7 @@ class Post(WalkBase):
         )
         new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_model
             new_model = self.rule(model)
         else:
@@ -200,7 +197,7 @@ class Post(WalkBase):
                 continue
             new_fields[key] = self(getattr(model, key))
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_fields
             new_model = self.rule(model)
         else:
@@ -214,7 +211,7 @@ class Post(WalkBase):
         for key in self.controlled_reverse(model.__class__._fields, self.reverse):
             new_fields[key] = self(getattr(model, key))
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_fields
             new_model = self.rule(model)
         else:

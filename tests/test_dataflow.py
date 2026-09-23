@@ -20,6 +20,7 @@ from oqd_compiler_infrastructure import (
     ForwardDataflowAnalysis,
     GraphProtocol,
     Lattice,
+    LatticeTop,
 )
 
 
@@ -56,25 +57,52 @@ class SimpleGraph(GraphProtocol[str, str]):
 
 class SetReachabilityLattice(Lattice[Set[str]]):
     def top(self) -> Set[str]:
-        return set(self.graph_nodes)
+        return LatticeTop
 
     def bottom(self) -> Set[str]:
         return set()
 
     def leq(self, t1: Set[str], t2: Set[str]) -> bool:
+        if t1 == t2:
+            return True
+
+        if t2 is self.top():
+            return True
+
+        if t1 is self.top():
+            return False
+
         return t1 <= t2
 
     def join(self, t1: Set[str], t2: Set[str]) -> Set[str]:
+        if t1 is self.top() or t2 is self.top():
+            return self.top()
+
         return t1 | t2
 
     def meet(self, t1: Set[str], t2: Set[str]) -> Set[str]:
+        if t1 is self.top():
+            return t2
+
+        if t2 is self.top():
+            return t1
+
         return t1 & t2
 
 
 class Reachability(ForwardDataflowAnalysis[str, str, Set[str]]):
     lattice = SetReachabilityLattice()
 
-    def transfer(self, node: str, state_in: Set[str]) -> Set[str]:
+    def merge(self, states):
+        return self.merge_union(states)
+
+    def initial_state(self, nodes):
+        return {node: self.lattice.bottom() for node in nodes}
+
+    def transfer(self, graph: SimpleGraph, node: str, state_in: Set[str]) -> Set[str]:
+        if state_in is LatticeTop:
+            return state_in
+
         return state_in | {node}
 
 
@@ -86,7 +114,7 @@ class TestForwardDataflowAnalysis:
             graph_succs={"entry": ["mid"], "mid": ["exit"]},
         )
         analysis = Reachability()
-        result = analysis.analyze(graph, analysis.merge_union)
+        result = analysis.analyze(graph)
 
         assert result.in_states["entry"] == set()
         assert result.out_states["entry"] == {"entry"}
@@ -95,11 +123,10 @@ class TestForwardDataflowAnalysis:
         assert result.iterations >= 3
 
 
-class BackwardReachability(BackwardDataflowAnalysis[str, str, Set[str]]):
-    lattice = SetReachabilityLattice()
-
-    def transfer(self, node: str, state_in: Set[str]) -> Set[str]:
-        return state_in | {node}
+class BackwardReachability(
+    BackwardDataflowAnalysis[str, str, Set[str]],
+    Reachability,
+): ...
 
 
 class TestBackwardDataflowAnalysis:
@@ -110,9 +137,9 @@ class TestBackwardDataflowAnalysis:
             graph_succs={"entry": ["mid"], "mid": ["exit"]},
         )
         analysis = BackwardReachability()
-        result = analysis.analyze(graph, analysis.merge_union)
-        assert result.out_states["exit"] == set()
-        assert result.in_states["exit"] == {"exit"}
-        assert result.in_states["mid"] == {"mid", "exit"}
-        assert result.in_states["entry"] == {"entry", "mid", "exit"}
+        result = analysis.analyze(graph)
+        assert result.in_states["exit"] == set()
+        assert result.out_states["exit"] == {"exit"}
+        assert result.out_states["mid"] == {"mid", "exit"}
+        assert result.out_states["entry"] == {"entry", "mid", "exit"}
         assert result.iterations >= 3
