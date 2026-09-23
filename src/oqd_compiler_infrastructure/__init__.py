@@ -21,6 +21,7 @@ from .dataflow import (
     ForwardDataflowAnalysis,
     GraphProtocol,
 )
+from .decorator import gen_conversion_pass, gen_pass, gen_rewrite_pass
 from .interface import TypeReflectBaseModel, VisitableBaseModel
 from .lattice import (
     Lattice,
@@ -73,4 +74,7 @@ __all__ = [
     "PowersetLatticeValue",
     "MapLattice",
     "MapLatticeValue",
+    "gen_conversion_pass",
+    "gen_pass",
+    "gen_rewrite_pass",
 ]
