@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import re
-from functools import partial, wraps
+from functools import wraps
 from inspect import FullArgSpec, getfullargspec
 from types import new_class
 from typing import Callable, Literal
