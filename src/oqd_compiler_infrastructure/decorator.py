@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import re
-from functools import wraps
+from functools import partial, wraps
 from inspect import FullArgSpec, getfullargspec
 from types import new_class
 from typing import Callable, Literal
@@ -26,16 +26,26 @@ from oqd_compiler_infrastructure.rule import ConversionRuleBase, RewriteRule
 def _gen_rule_init(
     cls_name: str,
     argspec: FullArgSpec,
-    conversion: bool = False,
+    rule_type: Literal["rewrite", "conversion"],
+    method: bool = False,
 ):
     """
     Helper function for creating the __init__ for a generated rule supporting arguments
     verification
     """
+    match rule_type:
+        case "rewrite":
+            rule_num_args = 1
+        case "conversion":
+            rule_num_args = 2
+        case _:
+            raise ValueError("rule_type must be one of ['rewrite', 'conversion']")
 
-    rule_num_args = 2 if conversion else 1
+    if method:
+        args = argspec.args[0:1] + argspec.args[1 + rule_num_args :]
+    else:
+        args = argspec.args[rule_num_args:]
 
-    args = argspec.args[rule_num_args:]
     kwargs = argspec.kwonlyargs
     default_args = argspec.defaults
     default_kwargs = argspec.kwonlydefaults
@@ -110,7 +120,12 @@ def _gen_rule_init(
 
 
 def gen_rewrite_pass(
-    func: Callable = None, *, rewriter=None, walk=None, return_pass: bool = False
+    func: Callable = None,
+    *,
+    rewriter=None,
+    walk=None,
+    return_pass: bool = False,
+    method: bool = False,
 ):
     """
     Decorator used to turn a function into a rewrite rule by considering the function as
@@ -131,6 +146,14 @@ def gen_rewrite_pass(
             _pre + "".join(map(lambda s: s.capitalize(), body)) + "RewriteRule" + _post
         )
 
+        def generic_map(self, model):
+            return _func(
+                *self._args[:method],
+                model,
+                *self._args[method + 1 :],
+                **self._kwargs,
+            )
+
         rule = new_class(
             cls_name,
             (RewriteRule,),
@@ -139,11 +162,12 @@ def gen_rewrite_pass(
                 {
                     "__module__": _func.__module__,
                     "__wrapped__": staticmethod(_func),
-                    "generic_map": lambda self, model: _func(
-                        model, *self._args, **self._kwargs
-                    ),
+                    "generic_map": generic_map,
                     "__init__": _gen_rule_init(
-                        cls_name=cls_name, argspec=argspec, conversion=False
+                        cls_name=cls_name,
+                        argspec=argspec,
+                        rule_type="rewrite",
+                        method=method,
                     ),
                 }
             ),
@@ -154,7 +178,10 @@ def gen_rewrite_pass(
             if return_pass:
                 return rewriter(walk(rule(*args, **kwargs)))
 
-            return rewriter(walk(rule(*args[1:], **kwargs)))(args[0])
+            if method:
+                return rewriter(walk(rule(args[:1], *args[2:], **kwargs)))(*args[1:2])
+
+            return rewriter(walk(rule(*args[1:], **kwargs)))(*args[:1])
 
         return pass_
 
@@ -164,7 +191,12 @@ def gen_rewrite_pass(
 
 
 def gen_conversion_pass(
-    func: Callable = None, *, rewriter=None, walk=None, return_pass: bool = False
+    func: Callable = None,
+    *,
+    rewriter=None,
+    walk=None,
+    return_pass: bool = False,
+    method: bool = False,
 ):
     """
     Decorator used to turn a function into a conversion rule by considering the function as
@@ -185,6 +217,15 @@ def gen_conversion_pass(
             _pre + "".join(map(lambda s: s.capitalize(), body)) + "RewriteRule" + _post
         )
 
+        def generic_map(self, model, operands):
+            return _func(
+                *self._args[:method],
+                model,
+                operands,
+                *self._args[method + 1 :],
+                **self._kwargs,
+            )
+
         rule = new_class(
             cls_name,
             (ConversionRuleBase,),
@@ -193,11 +234,12 @@ def gen_conversion_pass(
                 {
                     "__module__": _func.__module__,
                     "__wrapped__": staticmethod(_func),
-                    "generic_map": lambda self, model, operands: _func(
-                        model, operands, *self._args, **self._kwargs
-                    ),
+                    "generic_map": generic_map,
                     "__init__": _gen_rule_init(
-                        cls_name=cls_name, argspec=argspec, conversion=True
+                        cls_name=cls_name,
+                        argspec=argspec,
+                        rule_type="conversion",
+                        method=method,
                     ),
                 }
             ),
@@ -208,7 +250,10 @@ def gen_conversion_pass(
             if return_pass:
                 return rewriter(walk(rule(*args, **kwargs)))
 
-            return rewriter(walk(rule(*args[1:], **kwargs)))(args[0])
+            if method:
+                return rewriter(walk(rule(args[:1], *args[2:], **kwargs)))(*args[1:2])
+
+            return rewriter(walk(rule(*args[1:], **kwargs)))(*args[:1])
 
         return pass_
 
@@ -227,6 +272,7 @@ def gen_pass(
     rewriter=None,
     walk=None,
     return_pass: bool = False,
+    method: bool = False,
 ):
     """
     Decorator used to turn a function into a rewrite/conversion rule by considering the function
@@ -237,9 +283,17 @@ def gen_pass(
     match rule_type:
         case "rewrite":
             return gen_rewrite_pass(
-                func, rewriter=rewriter, walk=walk, return_pass=return_pass
+                func,
+                rewriter=rewriter,
+                walk=walk,
+                return_pass=return_pass,
+                method=method,
             )
         case "conversion":
             return gen_conversion_pass(
-                func, rewriter=rewriter, walk=walk, return_pass=return_pass
+                func,
+                rewriter=rewriter,
+                walk=walk,
+                return_pass=return_pass,
+                method=method,
             )
