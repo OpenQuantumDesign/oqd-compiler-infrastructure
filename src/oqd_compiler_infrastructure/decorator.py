@@ -179,7 +179,7 @@ def gen_rewrite_pass(
                 return rewriter(walk(rule(*args, **kwargs)))
 
             if method:
-                return rewriter(walk(rule(args[:1], *args[2:], **kwargs)))(*args[1:2])
+                return rewriter(walk(rule(*args[:1], *args[2:], **kwargs)))(*args[1:2])
 
             return rewriter(walk(rule(*args[1:], **kwargs)))(*args[:1])
 
@@ -251,7 +251,7 @@ def gen_conversion_pass(
                 return rewriter(walk(rule(*args, **kwargs)))
 
             if method:
-                return rewriter(walk(rule(args[:1], *args[2:], **kwargs)))(*args[1:2])
+                return rewriter(walk(rule(*args[:1], *args[2:], **kwargs)))(*args[1:2])
 
             return rewriter(walk(rule(*args[1:], **kwargs)))(*args[:1])
 
