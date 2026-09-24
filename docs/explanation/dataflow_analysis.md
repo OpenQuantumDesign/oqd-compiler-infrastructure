@@ -58,8 +58,7 @@ The `DataflowAnalysis` consist of:
 
 - [`Lattice`](#lattice) (provides the interface for processing the abstract values (which would be the associated lattice values) of the program)
 - transfer (evaluates the updated value of a program node after transfer) <div style="float:right;"> [![](https://img.shields.io/badge/Implementation-7C4DFF)][oqd_compiler_infrastructure.dataflow.DataflowAnalysis.transfer] </div>
-- merge_union <div style="float:right;"> [![](https://img.shields.io/badge/Implementation-7C4DFF)][oqd_compiler_infrastructure.dataflow.DataflowAnalysis.merge_union] </div>
-- merge_intersection <div style="float:right;"> [![](https://img.shields.io/badge/Implementation-7C4DFF)][oqd_compiler_infrastructure.dataflow.DataflowAnalysis.merge_intersection] </div>
+- merge <div style="float:right;"> [![](https://img.shields.io/badge/Implementation-7C4DFF)][oqd_compiler_infrastructure.dataflow.DataflowAnalysis.merge] </div>
 
 Dataflow analysis can be perfomed:
 

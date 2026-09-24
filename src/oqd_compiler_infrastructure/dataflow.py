@@ -36,6 +36,7 @@ class DataflowResult(BaseModel, Generic[NodeLabelType, NodeType, LatticeValue]):
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
     dataflow_analysis: DataflowAnalysis[NodeLabelType, NodeType, LatticeValue]
+    graph: GraphProtocol[NodeLabelType, LatticeValue]
     in_states: Dict[NodeLabelType, LatticeValue]
     out_states: Dict[NodeLabelType, LatticeValue]
     iterations: int
@@ -44,9 +45,30 @@ class DataflowResult(BaseModel, Generic[NodeLabelType, NodeType, LatticeValue]):
 class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
     """
     Base class that defines what every dataflow analysis must implement.
+
+    Attributes:
+        lattice ClassVar[Lattice[LatticeValue]]: Lattice equipped to the DataflowAnalsis.
+
+
+    Note:
+        lattice methods are accessible from DataflowAnalysis as they are forwarded by the
+        defined `__getattr__` method.
+
     """
 
     lattice: ClassVar[Lattice[LatticeValue]]
+
+    def __getattr__(self, name):
+        # Enable DataflowAnalysis to use methods from associated lattice directly as if it were a method of DataflowAnalysis
+
+        try:
+            return getattr(self.lattice, name)
+        except AttributeError:
+            pass
+
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{name}'"
+        )
 
     def __init__(self, *, max_iterations=1000000):
         super().__init__()
@@ -80,27 +102,23 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
 
     @abstractmethod
     def merge(self, states: Iterable[LatticeValue]) -> LatticeValue:
-        """Merges incoming states."""
+        """Specify merge operation for incoming states, such as lattice.merge_meet and lattice.merge_join."""
 
-    def merge_union(self, states: Iterable[LatticeValue]) -> LatticeValue:
-        """Joins incoming states using the lattice's join operation."""
-        states_list = list(states)
-        if not states_list:
-            return self.lattice.bottom()
-        merged = states_list[0]
-        for state in states_list[1:]:
-            merged = self.lattice.join(merged, state)
-        return merged
-
-    def merge_intersection(self, states: Iterable[LatticeValue]) -> LatticeValue:
-        """Meets incoming states using the lattice's meet operation."""
-        states_list = list(states)
-        if not states_list:
-            return self.lattice.top()
-        merged = states_list[0]
-        for state in states_list[1:]:
-            merged = self.lattice.meet(merged, state)
-        return merged
+    def result(
+        self,
+        graph: GraphProtocol[NodeLabelType, NodeType],
+        in_states: Dict[NodeLabelType, LatticeValue],
+        out_states: Dict[NodeLabelType, LatticeValue],
+        iterations: int,
+    ) -> DataflowResult:
+        """ "Method for specifying result format for the dataflow analysis"""
+        return DataflowResult(
+            dataflow_analysis=self,
+            graph=graph,
+            in_states=in_states,
+            out_states=out_states,
+            iterations=iterations,
+        )
 
     def initial_state(self, nodes) -> Dict[NodeLabelType, LatticeValue]:
         """Initial state of the nodes in the CFG."""
@@ -146,7 +164,7 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
             # In[n] = merge_n(Out[source(n)])
             srcs = list(self.sources(graph, node))
             if srcs:
-                merged_input = self.merge(out_states[n] for n in srcs)
+                merged_input = self.merge([out_states[n] for n in srcs])
 
                 if not self.lattice.equal(in_states[node], merged_input):
                     in_states[node] = merged_input
@@ -162,8 +180,8 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
                 if target not in worklist:
                     worklist.append(target)
 
-        result = DataflowResult(
-            dataflow_analysis=self,
+        result = self.result(
+            graph=graph,
             in_states=in_states,
             out_states=out_states,
             iterations=iterations,
@@ -202,3 +220,6 @@ class BackwardDataflowAnalysis(DataflowAnalysis[NodeLabelType, NodeType, Lattice
         self, graph: GraphProtocol[NodeLabelType, NodeType], node: NodeLabelType
     ) -> Iterable[NodeLabelType]:
         return graph.predecessors(node)
+
+
+"""TypeVar for node label of graph protocol"""

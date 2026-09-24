@@ -34,7 +34,7 @@ class CFGBlock(VisitableBaseModel):
     stmts: List[VisitableBaseModel] = Field(default_factory=list)
     preds: Set[int] = Field(default_factory=set)
     succs: Set[int] = Field(default_factory=set)
-    exit_nodes: List[int] = Field(default_factory=list)
+    exit_nodes: Set[int] = Field(default_factory=set)
     edge_labels: Dict[str, int] = Field(default_factory=dict)
     tags: Dict[str, str] = Field(default_factory=dict)
 
@@ -185,13 +185,16 @@ class CFGtoDot(RewriteRule):
 
     def map_CFGBlock(self, model):
 
-        if model.edge_labels:
-            label = [f"Condition: {self(model.stmts[0])}"]
-        else:
-            label = [self(stmt) for stmt in model.stmts]
+        label = [self(stmt) for stmt in model.stmts]
 
         if len(label) > self.max_lines and self.max_lines >= 0:
             label = label[: self.max_lines] + ["..."]
+
+        if model.edge_labels:
+            if len(label) < self.max_lines:
+                label[-1] = f"Condition: {label[-1]}"
+            else:
+                label += [f"Condition: {self(model.stmts[-1])}"]
 
         if model.tags:
             label = label + [

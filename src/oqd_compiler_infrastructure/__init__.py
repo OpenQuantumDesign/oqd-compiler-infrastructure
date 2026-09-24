@@ -21,13 +21,19 @@ from .dataflow import (
     ForwardDataflowAnalysis,
     GraphProtocol,
 )
+from .decorator import gen_conversion_pass, gen_pass, gen_rewrite_pass
 from .interface import TypeReflectBaseModel, VisitableBaseModel
 from .lattice import (
     Lattice,
     LatticeBase,
     LatticeBottom,
     LatticeTop,
+    MapLattice,
+    MapLatticeBottom,
+    MapLatticeTop,
+    MapLatticeValue,
     PowersetLattice,
+    PowersetLatticeTop,
     PowersetLatticeValue,
     maplattice,
 )
@@ -69,4 +75,12 @@ __all__ = [
     "CFGBlockAccumulator",
     "RelabelCFGBlocks",
     "PowersetLatticeValue",
+    "MapLattice",
+    "MapLatticeValue",
+    "gen_conversion_pass",
+    "gen_pass",
+    "gen_rewrite_pass",
+    "MapLatticeBottom",
+    "MapLatticeTop",
+    "PowersetLatticeTop",
 ]
