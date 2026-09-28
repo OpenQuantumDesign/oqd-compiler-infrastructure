@@ -75,6 +75,16 @@ class DataflowAnalysis(ABC, Generic[NodeLabelType, NodeType, LatticeValue]):
 
         self.max_iterations = max_iterations
 
+    def __call__(
+        self,
+        graph: GraphProtocol[NodeLabelType, NodeType],
+        *,
+        initial_state: Dict[NodeLabelType, NodeType] = None,
+        **kwargs,
+    ) -> DataflowResult[NodeLabelType, LatticeValue]:
+        """Run the analyze method when calling dataflow analysis"""
+        return self.analyze(graph, initial_state=initial_state, **kwargs)
+
     @abstractmethod
     def sources(
         self, graph: GraphProtocol[NodeLabelType, NodeType], node: NodeLabelType
