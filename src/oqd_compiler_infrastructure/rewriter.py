@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import ast
+
 from oqd_compiler_infrastructure.base import PassBase
-import operator
 
 ########################################################################################
 
@@ -35,8 +36,6 @@ class RewriterBase(PassBase):
         This code was inspired by [SynbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl), [Liang.jl](https://github.com/Roger-luo/Liang.jl/tree/main/src/rewrite).
     """
 
-    pass
-
 
 ########################################################################################
 
@@ -53,7 +52,6 @@ class Chain(RewriterBase):
         super().__init__()
 
         self.rules = list(rules)
-        pass
 
     @property
     def children(self):
@@ -75,12 +73,28 @@ class FixedPoint(RewriterBase):
         This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L117C8-L117C16), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/fixpoint.jl).
     """
 
-    def __init__(self, rule, *, max_iter=1000, equality=operator.eq):
+    def _default_eq(self, model1, model2):
+        if type(model1) is not type(model2):
+            return False
+
+        if isinstance(model1, ast.AST) and isinstance(model2, ast.AST):
+            for k in model1.__class__._fields():
+                if k in ("lineno", "col_offset", "ctx"):
+                    continue
+
+                if not self._default_eq(getattr(model1, k), getattr(model2, k)):
+                    return False
+
+            return True
+
+        return model1 == model2
+
+    def __init__(self, rule, *, max_iter=1000, equality=None):
         super().__init__()
 
         self.rule = rule
         self.max_iter = max_iter
-        self.equality = equality
+        self.equality = equality if equality else self._default_eq
 
     @property
     def children(self):
