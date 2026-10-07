@@ -15,6 +15,7 @@
 import ast
 
 from oqd_compiler_infrastructure.base import PassBase
+from oqd_compiler_infrastructure.interface import VisitableBaseModel
 
 ########################################################################################
 
@@ -36,6 +37,8 @@ class RewriterBase(PassBase):
         This code was inspired by [SynbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl), [Liang.jl](https://github.com/Roger-luo/Liang.jl/tree/main/src/rewrite).
     """
 
+    pass
+
 
 ########################################################################################
 
@@ -52,6 +55,7 @@ class Chain(RewriterBase):
         super().__init__()
 
         self.rules = list(rules)
+        pass
 
     @property
     def children(self):
@@ -73,16 +77,43 @@ class FixedPoint(RewriterBase):
         This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L117C8-L117C16), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/fixpoint.jl).
     """
 
-    def _default_eq(self, model1, model2):
+    @classmethod
+    def _default_eq(cls, model1, model2):
         if type(model1) is not type(model2):
             return False
 
-        if isinstance(model1, ast.AST) and isinstance(model2, ast.AST):
-            for k in model1.__class__._fields():
-                if k in ("lineno", "col_offset", "ctx"):
+        if isinstance(model1, ast.AST):
+            for k in model1.__class__._fields:
+                if k in ("lineno", "col_offset"):
                     continue
 
-                if not self._default_eq(getattr(model1, k), getattr(model2, k)):
+                if not cls._default_eq(getattr(model1, k), getattr(model2, k)):
+                    return False
+
+            return True
+
+        if isinstance(model1, VisitableBaseModel):
+            for k in model1.__class__.model_fields.keys():
+                if not cls._default_eq(getattr(model1, k), getattr(model2, k)):
+                    return False
+
+            return True
+
+        if isinstance(model1, (list, tuple)):
+            for pairs in zip(model1, model2):
+                if not cls._default_eq(*pairs):
+                    return False
+
+            return True
+
+        if isinstance(model1, dict):
+            keys = set(model1.keys()).union(model2.keys())
+
+            if keys != set(model1.keys()) or keys != set(model2.keys()):
+                return False
+
+            for k in keys:
+                if not cls._default_eq(model1.get(k), model2.get(k)):
                     return False
 
             return True
