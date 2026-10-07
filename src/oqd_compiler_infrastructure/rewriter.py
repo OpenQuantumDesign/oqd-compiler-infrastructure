@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from oqd_compiler_infrastructure.base import PassBase
+import operator
 
 ########################################################################################
 
@@ -74,12 +75,12 @@ class FixedPoint(RewriterBase):
         This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L117C8-L117C16), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/fixpoint.jl).
     """
 
-    def __init__(self, rule, *, max_iter=1000):
+    def __init__(self, rule, *, max_iter=1000, equality=operator.eq):
         super().__init__()
 
         self.rule = rule
         self.max_iter = max_iter
-        pass
+        self.equality = equality
 
     @property
     def children(self):
@@ -91,7 +92,7 @@ class FixedPoint(RewriterBase):
         while True:
             _model = self.rule(new_model)
 
-            if _model == new_model or i >= self.max_iter:
+            if self.equality(_model, new_model) or i >= self.max_iter:
                 return new_model
 
             new_model = _model
