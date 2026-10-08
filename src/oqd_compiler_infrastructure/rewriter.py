@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import ast
+from copy import deepcopy
 
 from oqd_compiler_infrastructure.base import PassBase
 from oqd_compiler_infrastructure.interface import VisitableBaseModel
@@ -132,12 +133,13 @@ class FixedPoint(RewriterBase):
 
     def map(self, model):
         i = 0
-        new_model = model
+        previous = deepcopy(model)
         while True:
-            _model = self.rule(new_model)
+            _model = self.rule(model)
 
-            if self.equality(_model, new_model) or i >= self.max_iter:
-                return new_model
+            if self.equality(_model, previous) or i >= self.max_iter:
+                return _model
 
-            new_model = _model
+            previous = deepcopy(_model)
+            model = _model
             i += 1
