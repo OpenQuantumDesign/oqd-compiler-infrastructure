@@ -501,7 +501,7 @@ class InplacePost(WalkBase):
 
         new_model = self.rule(model)
 
-        for key in model.__class__.model_fields.keys():
+        for key in model.__class__._fields:
             setattr(model, key, getattr(new_model, key))
 
         return model
