@@ -31,6 +31,8 @@ from oqd_compiler_infrastructure import (
 
 class PrintWalkOrder(RewriteRule):
     def __init__(self):
+        super().__init__()
+
         self.current_index = 0
         self.string = ""
 
@@ -731,7 +733,7 @@ class TestWalkUnsupportedTypes:
         "Test walks applied on set raises a warning as sets are not traversed through by the walks."
         inp = {"a", "b", "c"}
 
-        printer = walk(PrintWalkOrder())
+        printer = walk(PrintWalkOrder(), verbose=True)
 
         with pytest.warns(
             UserWarning,

@@ -61,7 +61,7 @@ class RewriteRule(RuleBase):
         return model
 
 
-class ConversionRule(RuleBase):
+class ConversionRuleBase(RuleBase):
     """
     This class represents a rule used to convert between different types and IRs.
 
@@ -88,6 +88,15 @@ class ConversionRule(RuleBase):
 
     def generic_map(self, model, operands):
         return model
+
+
+class ConversionRule(ConversionRuleBase):
+    """
+    This class represents a rule used to convert between different types and IRs.
+
+    Acknowledgement:
+        This code was inspired by [MLIR]()
+    """
 
     def map_dict(self, model, operands):
         return operands

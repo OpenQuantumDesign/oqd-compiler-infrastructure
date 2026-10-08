@@ -16,7 +16,8 @@ from __future__ import annotations
 
 import types
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, Type, TypeVar
+from functools import cache, reduce
+from typing import ClassVar, Dict, Generic, Iterable, Literal, Set, Type, TypeVar, Union
 
 from .meta import Singleton
 
@@ -29,7 +30,10 @@ class LatticeTop:
     In `LatticeBase`, nodes are classes that inherit from `LatticeTop`.
     """
 
-    pass
+    def __new__(self, *args, **kwargs):
+        raise AssertionError(
+            "Lattice value types cannot be instantiated use the class instead, e.g. LatticeTop instead of LatticeTop()"
+        )
 
 
 class LatticeBottom(LatticeTop):
@@ -37,13 +41,19 @@ class LatticeBottom(LatticeTop):
     Base class representing the bottom element of the lattice.
     """
 
-    pass
-
 
 LatticeValue = TypeVar("LatticeValue")
+"""TypeVar for lattice values."""
 
 
-class Lattice(ABC, Generic[LatticeValue], metaclass=Singleton):
+########################################################################################
+
+
+class LatticeMeta(Singleton):
+    _singleton_instance_map = {}
+
+
+class Lattice(ABC, Generic[LatticeValue], metaclass=LatticeMeta):
     """
     Abstract base class for a lattice interface.
     """
@@ -77,6 +87,22 @@ class Lattice(ABC, Generic[LatticeValue], metaclass=Singleton):
         """Returns True if two values are equal in the lattice."""
         return self.leq(t1, t2) and self.leq(t2, t1)
 
+    def merge_join(self, values: Iterable[LatticeValue]) -> LatticeValue:
+        """Returns the least upper bound of a set of lattice values."""
+        return reduce(self.join, values, self.bottom())
+
+    def merge_union(self, values: Iterable[LatticeValue]) -> LatticeValue:
+        """Returns the least upper bound of a set of lattice values, alias of merge_join"""
+        return reduce(self.join, values, self.bottom())
+
+    def merge_meet(self, values: Iterable[LatticeValue]) -> LatticeValue:
+        """Returns the greatest lower bound of a set of lattice values."""
+        return reduce(self.meet, values, self.top())
+
+    def merge_intersection(self, values: Iterable[LatticeValue]) -> LatticeValue:
+        """Returns the greatest lower bound of a set of lattice values, alias of merge_meet"""
+        return reduce(self.meet, values, self.top())
+
 
 class LatticeBase(Lattice[LatticeValue]):
     """
@@ -93,7 +119,7 @@ class LatticeBase(Lattice[LatticeValue]):
 
     def is_class_node(self, t: object) -> bool:
         """Returns True if `t` is a valid lattice node."""
-        return isinstance(t, type) and issubclass(t, LatticeTop)
+        return isinstance(t, type) and issubclass(t, self.top())
 
     def atomic_ancestors(self, t: object) -> set[object]:
         """Returns the atomic ancestors of a given node."""
@@ -103,7 +129,7 @@ class LatticeBase(Lattice[LatticeValue]):
 
     def leq(self, t1: LatticeValue, t2: LatticeValue) -> bool:
         """Returns True if `t1 <= t2` in the lattice."""
-        if t1 is LatticeBottom:
+        if t1 is self.bottom():
             return True
         if not self.is_class_node(t1) or not self.is_class_node(t2):
             return False
@@ -118,12 +144,12 @@ class LatticeBase(Lattice[LatticeValue]):
         if self.leq(t2, t1):
             return t1
         if not self.is_class_node(t1) or not self.is_class_node(t2):
-            return LatticeTop
+            return self.top()
         common_ancestors = self.atomic_ancestors(t1).intersection(
             self.atomic_ancestors(t2)
         )
         if not common_ancestors:
-            return LatticeTop
+            return self.top()
 
         minimal_ancestors = set()
         for candidate in common_ancestors:
@@ -134,7 +160,7 @@ class LatticeBase(Lattice[LatticeValue]):
             if not smaller:
                 minimal_ancestors.add(candidate)
         if len(minimal_ancestors) != 1:
-            return LatticeTop
+            return self.top()
         return next(iter(minimal_ancestors))
 
     def meet(self, t1: LatticeValue, t2: LatticeValue) -> LatticeValue:
@@ -143,115 +169,192 @@ class LatticeBase(Lattice[LatticeValue]):
             return t1
         if self.leq(t2, t1):
             return t2
-        return LatticeBottom
+        return self.bottom()
 
 
-def maplattice(lattice: Type[Lattice]) -> Type[Lattice]:
-    """Builds a map lattice class from a lattice class for map based analysis"""
-    name = f"Map{lattice.__name__}"
+########################################################################################
 
-    def wraps(f):
-        f.__qualname__ = f"{name}.{f.__name__}"
-        return f
 
-    @wraps
-    def top(self) -> LatticeValue:
+class PowersetLatticeTop(LatticeTop): ...
+
+
+SetElementTypeVar = TypeVar("SetElementTypeVar")
+PowersetLatticeValue = Set[SetElementTypeVar] | Type[PowersetLatticeTop]
+
+
+class PowersetLattice(Lattice[PowersetLatticeValue]):
+    def top(self) -> PowersetLatticeValue:
+        return PowersetLatticeTop
+
+    def bottom(self) -> PowersetLatticeValue:
+        return set()
+
+    def leq(self, t1: PowersetLatticeValue, t2: PowersetLatticeValue) -> bool:
+        if t2 is self.top():
+            return True
+        if t1 is self.top():
+            return False
+        return t1 <= t2
+
+    def join(
+        self, t1: PowersetLatticeValue, t2: PowersetLatticeValue
+    ) -> PowersetLatticeValue:
+        if t1 is self.top() or t2 is self.top():
+            return self.top()
+        return t1 | t2
+
+    def meet(
+        self, t1: PowersetLatticeValue, t2: PowersetLatticeValue
+    ) -> PowersetLatticeValue:
+        if t1 is self.top():
+            return t2
+        if t2 is self.top():
+            return t1
+        return t1 & t2
+
+
+########################################################################################
+
+
+class MapLatticeTop(LatticeTop): ...
+
+
+class MapLatticeBottom(MapLatticeTop): ...
+
+
+MapLatticeValue = Union[Dict[str, LatticeValue], Type[MapLatticeTop]]
+
+
+class MapLattice(Lattice[MapLatticeValue]):
+    element_lattice = ClassVar[Lattice[LatticeValue]]
+    default_mode = ClassVar[Literal["flexible", "top", "bottom", "strict"]]
+
+    def __new__(cls):
+        if cls is MapLattice:
+            raise TypeError("Can't instantiate abstract class {}".format(cls.__name__))
+        return super().__new__(cls)
+
+    @property
+    def lower_default(self):
+        match self.default_mode:
+            case "flexible" | "bottom":
+                return self.element_lattice.bottom()
+            case "top" | "strict":
+                return self.element_lattice.top()
+            case _:
+                raise ValueError(
+                    "default mode should be one of [flexible, top, bottom, strict]"
+                )
+
+    @property
+    def upper_default(self):
+        match self.default_mode:
+            case "flexible" | "top":
+                return self.element_lattice.top()
+            case "bottom" | "strict":
+                return self.element_lattice.bottom()
+            case _:
+                raise ValueError(
+                    "default mode should be one of [flexible, top, bottom, strict]"
+                )
+
+    def top(self) -> MapLatticeValue:
         """Returns the top element of the lattice."""
-        return LatticeTop
+        return MapLatticeTop
 
-    @wraps
-    def bottom(self) -> LatticeValue:
+    def bottom(self) -> MapLatticeValue:
         """Returns the bottom element of the lattice."""
-        return LatticeBottom
+        return MapLatticeBottom
 
-    @wraps
-    def leq(self, t1: LatticeValue, t2: LatticeValue) -> bool:
+    def leq(
+        self,
+        t1: MapLatticeValue,
+        t2: MapLatticeValue,
+    ) -> bool:
         """Returns True if `t1 <= t2` in the lattice."""
 
-        if t1 is LatticeBottom or t2 is LatticeTop:
+        if t1 is self.bottom() or t2 is self.top():
             return True
-        if t1 is LatticeTop:
-            return t2 is LatticeTop
-        if t2 is LatticeBottom:
-            return self.leq(t1, {})
-        v = self._element_lattice()
-        b = v.bottom()
+        if t1 is self.top():
+            return t2 is self.top()
+        if t2 is self.bottom():
+            return t1 is self.bottom()
         for k in set(t1).union(t2):
-            if not v.leq(t1.get(k, b), t2.get(k, b)):
+            if not self.element_lattice.leq(
+                t1.get(k, self.lower_default), t2.get(k, self.upper_default)
+            ):
                 return False
         return True
 
-    @wraps
-    def join(self, t1: LatticeValue, t2: LatticeValue) -> LatticeValue:
+    def join(
+        self,
+        t1: MapLatticeValue,
+        t2: MapLatticeValue,
+    ) -> MapLatticeValue:
         """Returns the least upper bound of `t1` and `t2`."""
 
-        if t1 is LatticeTop or t2 is LatticeTop:
-            return LatticeTop
-        if t1 is LatticeBottom:
+        if t1 is self.top() or t2 is self.top():
+            return self.top()
+        if t1 is self.bottom():
             return t2
-        if t2 is LatticeBottom:
+        if t2 is self.bottom():
             return t1
-        v = self._element_lattice()
-        b = v.bottom()
-        return {k: v.join(t1.get(k, b), t2.get(k, b)) for k in set(t1).union(t2)}
+        return {
+            k: self.element_lattice.join(
+                t1.get(k, self.lower_default), t2.get(k, self.lower_default)
+            )
+            for k in set(t1).union(t2)
+        }
 
-    @wraps
-    def meet(self, t1: LatticeValue, t2: LatticeValue) -> LatticeValue:
+    def meet(
+        self,
+        t1: MapLatticeValue,
+        t2: MapLatticeValue,
+    ) -> MapLatticeValue:
         """Returns the greatest lower bound of `t1` and `t2`."""
 
-        if t1 is LatticeBottom or t2 is LatticeBottom:
-            return LatticeBottom
-        if t1 is LatticeTop:
+        if t1 is self.bottom() or t2 is self.bottom():
+            return self.bottom()
+        if t1 is self.top():
             return t2
-        if t2 is LatticeTop:
+        if t2 is self.top():
             return t1
-        v = self._element_lattice()
-        b = v.bottom()
-        return {k: v.meet(t1.get(k, b), t2.get(k, b)) for k in set(t1).union(t2)}
+        return {
+            k: self.element_lattice.meet(
+                t1.get(k, self.upper_default), t2.get(k, self.upper_default)
+            )
+            for k in set(t1).union(t2)
+        }
+
+
+@cache
+def maplattice(
+    lattice: Type[Lattice],
+    *,
+    default_mode: Literal["flexible", "top", "bottom", "strict"] = "flexible",
+) -> Type[Lattice]:
+    """Builds a map lattice class from a lattice class for map based analysis"""
+    name = f"Map{lattice.__name__}"
+
+    if getattr(lattice, "__origin__", None):
+        element_lattice_value = lattice.__args__[0]
+    else:
+        element_lattice_value = lattice.__orig_bases__[0].__args__[0]
 
     def update_ns(ns):
         ns.update(
             {
                 "__module__": lattice.__module__,
-                "top": top,
-                "bottom": bottom,
-                "leq": leq,
-                "join": join,
-                "meet": meet,
-                "_element_lattice": lattice,
+                "element_lattice": lattice(),
+                "default_mode": default_mode,
             }
         )
         return ns
 
-    cls = types.new_class(name, (Lattice[Dict[str, LatticeValue]],), None, update_ns)
+    cls = types.new_class(
+        name,
+        (MapLattice[MapLatticeValue[element_lattice_value]],),
+        None,
+        update_ns,
+    )
     return cls
-
-
-PowersetValue = set | type[LatticeTop]
-
-
-class PowersetLattice(Lattice[PowersetValue]):
-    def top(self) -> PowersetValue:
-        return LatticeTop
-
-    def bottom(self) -> PowersetValue:
-        return set()
-
-    def leq(self, t1: PowersetValue, t2: PowersetValue) -> bool:
-        if t2 is LatticeTop:
-            return True
-        if t1 is LatticeTop:
-            return False
-        return t1 <= t2
-
-    def join(self, t1: PowersetValue, t2: PowersetValue) -> PowersetValue:
-        if t1 is LatticeTop or t2 is LatticeTop:
-            return LatticeTop
-        return t1 | t2
-
-    def meet(self, t1: PowersetValue, t2: PowersetValue) -> PowersetValue:
-        if t1 is LatticeTop:
-            return t2
-        if t2 is LatticeTop:
-            return t1
-        return t1 & t2

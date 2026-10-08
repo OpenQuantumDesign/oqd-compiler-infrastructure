@@ -15,7 +15,7 @@
 from warnings import warn
 
 from oqd_compiler_infrastructure.base import PassBase
-from oqd_compiler_infrastructure.rule import ConversionRule
+from oqd_compiler_infrastructure.rule import ConversionRuleBase
 
 ########################################################################################
 
@@ -38,11 +38,12 @@ class WalkBase(PassBase):
         This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L167), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/walk.jl#L1)
     """
 
-    def __init__(self, rule: PassBase, *, reverse: bool = False):
+    def __init__(self, rule: PassBase, *, reverse: bool = False, verbose=False):
         super().__init__()
 
         self.rule = rule
         self.reverse = reverse
+        self.verbose = verbose
 
     @staticmethod
     def controlled_reverse(iterable, reverse, *, restore_type=False):
@@ -74,7 +75,8 @@ class WalkBase(PassBase):
         return self.rule(model)
 
     def walk_set(self, model):
-        warn("Sets are not traversed by oqd-compiler-infrastructure walks")
+        if self.verbose:
+            warn("Sets are not traversed by oqd-compiler-infrastructure walks")
         self.generic_walk(model)
 
 
@@ -160,7 +162,7 @@ class Post(WalkBase):
             k: v for k, v in self.controlled_reverse(new_model.items(), self.reverse)
         }
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_model
             new_model = self.rule(model)
         else:
@@ -172,7 +174,7 @@ class Post(WalkBase):
         new_model = [self(e) for e in self.controlled_reverse(model, self.reverse)]
         new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_model
             new_model = self.rule(model)
         else:
@@ -186,7 +188,7 @@ class Post(WalkBase):
         )
         new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_model
             new_model = self.rule(model)
         else:
@@ -203,7 +205,7 @@ class Post(WalkBase):
                 continue
             new_fields[key] = self(getattr(model, key))
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_fields
             new_model = self.rule(model)
         else:
@@ -217,7 +219,7 @@ class Post(WalkBase):
         for key in self.controlled_reverse(model.__class__._fields, self.reverse):
             new_fields[key] = self(getattr(model, key))
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_fields
             new_model = self.rule(model)
         else:
@@ -232,8 +234,8 @@ class Level(WalkBase):
     This class represents the level/breadth first order tree traversal algorithm that walks through an AST.
     """
 
-    def __init__(self, rule, *, reverse=False):
-        super().__init__(rule, reverse=reverse)
+    def __init__(self, rule: PassBase, *, reverse: bool = False, verbose=False):
+        super().__init__(rule, reverse=reverse, verbose=verbose)
 
         self.stack = []
         self.initial = True
@@ -452,11 +454,7 @@ class InplacePost(WalkBase):
         )
         new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
-        if isinstance(self.rule, ConversionRule):
-            self.rule.operands = new_model
-            new_model = self.rule(model)
-        else:
-            new_model = self.rule(new_model)
+        new_model = self.rule(new_model)
 
         return new_model
 

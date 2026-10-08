@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .base import PassBase
-from .cfg import CFG, CFGBlock, CFGBlockAccumulator, cfg_to_dot
+from .cfg import CFG, CFGBlock, CFGBlockAccumulator, RelabelCFGBlocks, cfg_to_dot
 from .dataflow import (
     BackwardDataflowAnalysis,
     DataflowAnalysis,
@@ -21,13 +21,20 @@ from .dataflow import (
     ForwardDataflowAnalysis,
     GraphProtocol,
 )
+from .decorator import gen_conversion_pass, gen_pass, gen_rewrite_pass
 from .interface import TypeReflectBaseModel, VisitableBaseModel
 from .lattice import (
     Lattice,
     LatticeBase,
     LatticeBottom,
     LatticeTop,
+    MapLattice,
+    MapLatticeBottom,
+    MapLatticeTop,
+    MapLatticeValue,
     PowersetLattice,
+    PowersetLatticeTop,
+    PowersetLatticeValue,
     maplattice,
 )
 from .rewriter import Chain, FixedPoint, RewriterBase
@@ -68,4 +75,14 @@ __all__ = [
     "CFGBlockAccumulator",
     "InplacePost",
     "InplacePre",
+    "RelabelCFGBlocks",
+    "PowersetLatticeValue",
+    "MapLattice",
+    "MapLatticeValue",
+    "gen_conversion_pass",
+    "gen_pass",
+    "gen_rewrite_pass",
+    "MapLatticeBottom",
+    "MapLatticeTop",
+    "PowersetLatticeTop",
 ]
