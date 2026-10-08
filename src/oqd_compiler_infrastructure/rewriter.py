@@ -55,7 +55,6 @@ class Chain(RewriterBase):
         super().__init__()
 
         self.rules = list(rules)
-        pass
 
     @property
     def children(self):

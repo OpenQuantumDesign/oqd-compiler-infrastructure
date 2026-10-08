@@ -39,7 +39,7 @@ from .lattice import (
 )
 from .rewriter import Chain, FixedPoint, RewriterBase
 from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
-from .walk import In, Level, Post, Pre, WalkBase
+from .walk import In, InplacePost, InplacePre, Level, Post, Pre, WalkBase
 
 __all__ = [
     "VisitableBaseModel",
@@ -73,6 +73,8 @@ __all__ = [
     "CFGBlock",
     "cfg_to_dot",
     "CFGBlockAccumulator",
+    "InplacePost",
+    "InplacePre",
     "RelabelCFGBlocks",
     "PowersetLatticeValue",
     "MapLattice",
