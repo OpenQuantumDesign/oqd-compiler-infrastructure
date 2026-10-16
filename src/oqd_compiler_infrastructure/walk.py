@@ -406,7 +406,7 @@ class InplacePre(WalkBase):
         new_model = self.rule(model)
 
         for k, v in self.controlled_reverse(new_model.items(), self.reverse):
-            model[k] = self.rule(v)
+            model[k] = self(v)
 
         return model
 
