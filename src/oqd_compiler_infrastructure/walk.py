@@ -12,8 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import ast
+from warnings import warn
+
 from oqd_compiler_infrastructure.base import PassBase
-from oqd_compiler_infrastructure.rule import ConversionRule
+from oqd_compiler_infrastructure.interface import VisitableBaseModel
+from oqd_compiler_infrastructure.rule import ConversionRuleBase
 
 ########################################################################################
 
@@ -36,12 +40,12 @@ class WalkBase(PassBase):
         This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L167), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/walk.jl#L1)
     """
 
-    def __init__(self, rule: PassBase, *, reverse: bool = False):
+    def __init__(self, rule: PassBase, *, reverse: bool = False, verbose=False):
         super().__init__()
 
         self.rule = rule
         self.reverse = reverse
-        pass
+        self.verbose = verbose
 
     @staticmethod
     def controlled_reverse(iterable, reverse, *, restore_type=False):
@@ -72,7 +76,10 @@ class WalkBase(PassBase):
     def generic_walk(self, model):
         return self.rule(model)
 
-    pass
+    def walk_set(self, model):
+        if self.verbose:
+            warn("Sets are not traversed by oqd-compiler-infrastructure walks")
+        self.generic_walk(model)
 
 
 ########################################################################################
@@ -157,7 +164,7 @@ class Post(WalkBase):
             k: v for k, v in self.controlled_reverse(new_model.items(), self.reverse)
         }
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_model
             new_model = self.rule(model)
         else:
@@ -169,7 +176,7 @@ class Post(WalkBase):
         new_model = [self(e) for e in self.controlled_reverse(model, self.reverse)]
         new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_model
             new_model = self.rule(model)
         else:
@@ -183,7 +190,7 @@ class Post(WalkBase):
         )
         new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_model
             new_model = self.rule(model)
         else:
@@ -200,7 +207,7 @@ class Post(WalkBase):
                 continue
             new_fields[key] = self(getattr(model, key))
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_fields
             new_model = self.rule(model)
         else:
@@ -214,7 +221,7 @@ class Post(WalkBase):
         for key in self.controlled_reverse(model.__class__._fields, self.reverse):
             new_fields[key] = self(getattr(model, key))
 
-        if isinstance(self.rule, ConversionRule):
+        if isinstance(self.rule, ConversionRuleBase):
             self.rule.operands = new_fields
             new_model = self.rule(model)
         else:
@@ -229,8 +236,8 @@ class Level(WalkBase):
     This class represents the level/breadth first order tree traversal algorithm that walks through an AST.
     """
 
-    def __init__(self, rule, *, reverse=False):
-        super().__init__(rule, reverse=reverse)
+    def __init__(self, rule: PassBase, *, reverse: bool = False, verbose=False):
+        super().__init__(rule, reverse=reverse, verbose=verbose)
 
         self.stack = []
         self.initial = True
@@ -377,3 +384,158 @@ class In(WalkBase):
         if keys:
             self(getattr(model, keys[-1]))
         return model
+
+
+########################################################################################
+
+
+class InplacePre(WalkBase):
+    """
+    This class represents the in-place pre order tree traversal algorithm that walks through an AST
+    and applies the rule in-place from top to bottom.
+    """
+
+    def _update(self, model, new_model):
+        if new_model.__class__ is not model.__class__:
+            model = new_model
+
+        match model:
+            case dict():
+                for k, v in self.controlled_reverse(new_model.items(), self.reverse):
+                    model[k] = self(v)
+            case list():
+                for n, e in self.controlled_reverse(
+                    list(enumerate(new_model)), self.reverse
+                ):
+                    model[n] = self(e)
+
+            case VisitableBaseModel():
+                for key in self.controlled_reverse(
+                    new_model.__class__.model_fields.keys(), self.reverse
+                ):
+                    if key == "class_":
+                        continue
+                    setattr(model, key, self(getattr(new_model, key)))
+
+            case ast.AST():
+                for key in self.controlled_reverse(
+                    new_model.__class__._fields, self.reverse
+                ):
+                    setattr(model, key, self(getattr(new_model, key)))
+
+        return model
+
+    def walk_tuple(self, model):
+        new_model = self.rule(model)
+
+        new_model = tuple(
+            [self(e) for e in self.controlled_reverse(new_model, self.reverse)]
+        )
+
+        return self.controlled_reverse(new_model, self.reverse, restore_type=True)
+
+    def _supported_walk(self, model):
+        new_model = self.rule(model)
+
+        return self._update(model, new_model)
+
+    def walk_dict(self, model):
+        return self._supported_walk(model)
+
+    def walk_list(self, model):
+        return self._supported_walk(model)
+
+    def walk_VisitableBaseModel(self, model):
+        return self._supported_walk(model)
+
+    def walk_AST(self, model):
+        return self._supported_walk(model)
+
+
+class InplacePost(WalkBase):
+    """
+    This class represents the in-place post order tree traversal algorithm that walks through an AST
+    and applies the rule in-place from bottom to top.
+
+    Acknowledgement:
+        This code was inspired by [SymbolicUtils.jl](https://github.com/JuliaSymbolics/SymbolicUtils.jl/blob/master/src/rewriters.jl#L183), [Liang.jl](https://github.com/Roger-luo/Liang.jl/blob/main/src/rewrite/walk.jl#L9)
+    """
+
+    def _update(self, model, new_model):
+        if new_model.__class__ is not model.__class__:
+            return new_model
+
+        match model:
+            case dict():
+                for k, v in self.controlled_reverse(new_model.items(), self.reverse):
+                    model[k] = v
+            case list():
+                for n, e in self.controlled_reverse(
+                    list(enumerate(new_model)), self.reverse
+                ):
+                    model[n] = e
+
+            case VisitableBaseModel():
+                for key in self.controlled_reverse(
+                    new_model.__class__.model_fields.keys(), self.reverse
+                ):
+                    if key == "class_":
+                        continue
+                    setattr(model, key, getattr(new_model, key))
+
+            case ast.AST():
+                for key in self.controlled_reverse(
+                    new_model.__class__._fields, self.reverse
+                ):
+                    setattr(model, key, getattr(new_model, key))
+
+        return model
+
+    def walk_tuple(self, model):
+        new_model = tuple(
+            [self(e) for e in self.controlled_reverse(model, self.reverse)]
+        )
+        new_model = self.controlled_reverse(new_model, self.reverse, restore_type=True)
+
+        new_model = self.rule(new_model)
+
+        return new_model
+
+    def walk_dict(self, model):
+        for k, v in self.controlled_reverse(model.items(), self.reverse):
+            model[k] = self(v)
+
+        new_model = self.rule(model)
+
+        return self._update(model, new_model)
+
+    def walk_list(self, model):
+        for n, e in self.controlled_reverse(list(enumerate(model)), self.reverse):
+            model[n] = self(e)
+
+        new_model = self.rule(model)
+
+        for n, e in enumerate(new_model):
+            model[n] = e
+
+        return self._update(model, new_model)
+
+    def walk_VisitableBaseModel(self, model):
+        for key in self.controlled_reverse(
+            model.__class__.model_fields.keys(), self.reverse
+        ):
+            if key == "class_":
+                continue
+            setattr(model, key, self(getattr(model, key)))
+
+        new_model = self.rule(model)
+
+        return self._update(model, new_model)
+
+    def walk_AST(self, model):
+        for key in self.controlled_reverse(model.__class__._fields, self.reverse):
+            setattr(model, key, self(getattr(model, key)))
+
+        new_model = self.rule(model)
+
+        return self._update(model, new_model)

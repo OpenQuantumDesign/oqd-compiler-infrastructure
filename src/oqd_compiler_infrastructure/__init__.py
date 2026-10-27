@@ -21,19 +21,25 @@ from .dataflow import (
     ForwardDataflowAnalysis,
     GraphProtocol,
 )
+from .decorator import gen_conversion_pass, gen_pass, gen_rewrite_pass
 from .interface import TypeReflectBaseModel, VisitableBaseModel
 from .lattice import (
     Lattice,
     LatticeBase,
     LatticeBottom,
     LatticeTop,
+    MapLattice,
+    MapLatticeBottom,
+    MapLatticeTop,
+    MapLatticeValue,
     PowersetLattice,
+    PowersetLatticeTop,
     PowersetLatticeValue,
     maplattice,
 )
 from .rewriter import Chain, FixedPoint, RewriterBase
 from .rule import ConversionRule, PrettyPrint, RewriteRule, RuleBase
-from .walk import In, Level, Post, Pre, WalkBase
+from .walk import In, InplacePost, InplacePre, Level, Post, Pre, WalkBase
 
 __all__ = [
     "VisitableBaseModel",
@@ -67,6 +73,16 @@ __all__ = [
     "CFGBlock",
     "cfg_to_dot",
     "CFGBlockAccumulator",
+    "InplacePost",
+    "InplacePre",
     "RelabelCFGBlocks",
     "PowersetLatticeValue",
+    "MapLattice",
+    "MapLatticeValue",
+    "gen_conversion_pass",
+    "gen_pass",
+    "gen_rewrite_pass",
+    "MapLatticeBottom",
+    "MapLatticeTop",
+    "PowersetLatticeTop",
 ]

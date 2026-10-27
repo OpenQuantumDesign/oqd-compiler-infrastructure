@@ -15,7 +15,7 @@
 ########################################################################################
 
 from functools import reduce
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Set
 
 import graphviz
 from pydantic import Field
@@ -32,20 +32,26 @@ class CFGBlock(VisitableBaseModel):
 
     register_id: int
     stmts: List[VisitableBaseModel] = Field(default_factory=list)
-    preds: List[int] = Field(default_factory=list)
-    succs: List[int] = Field(default_factory=list)
-    exit_nodes: List[int] = Field(default_factory=list)
-    edge_labels: Dict[int, str] = Field(default_factory=dict)
+    preds: Set[int] = Field(default_factory=set)
+    succs: Set[int] = Field(default_factory=set)
+    exit_nodes: Set[int] = Field(default_factory=set)
+    edge_labels: Dict[str, int] = Field(default_factory=dict)
+    tags: Dict[str, str] = Field(default_factory=dict)
 
-    def add_succ(self, succ: int, label: str | None = None) -> None:
-        if succ not in self.succs:
-            self.succs.append(succ)
-        if label is not None:
-            self.edge_labels[succ] = label
+    def add_succ(self, succ: int, label: str | List[str] | None = None) -> None:
+        self.succs.add(succ)
+
+        if label is None:
+            return
+
+        if isinstance(label, list):
+            for _label in label:
+                self.edge_labels[_label] = succ
+        else:
+            self.edge_labels[label] = succ
 
     def add_pred(self, pred: int) -> None:
-        if pred not in self.preds:
-            self.preds.append(pred)
+        self.preds.add(pred)
 
     def add_preds(self, preds: Iterable[int]) -> None:
         for pred in preds:
@@ -91,7 +97,8 @@ class CFGBlockAccumulator(RewriteRule):
         self.blocks[block1].succs = self.blocks[block2].succs
         self.blocks[block1].edge_labels = self.blocks[block2].edge_labels
         for succ in self.blocks[block2].succs:
-            self.blocks[succ].preds[self.blocks[succ].preds.index(block2)] = block1
+            self.blocks[succ].preds.remove(block2)
+            self.blocks[succ].preds.add(block1)
         self.blocks.pop(block2)
 
         return block1
@@ -116,13 +123,17 @@ class CFGBlockAccumulator(RewriteRule):
         return CFG(blocks=self.blocks)
 
     def map_CFGBlock(self, model: CFGBlock):
-        block = model
+        current_block = model
         blocks = []
         while True:
-            if len(block.succs) != 1 or (len(block.preds) > 1 and block != model):
+            if (
+                len(current_block.succs) == 0
+                or current_block.edge_labels
+                or (len(current_block.preds) > 1 and current_block != model)
+            ):
                 break
-            blocks.append(block.register_id)
-            block = self.blocks[block.succs[0]]
+            blocks.append(current_block.register_id)
+            current_block = self.blocks[list(current_block.succs)[0]]
         return blocks
 
 
@@ -145,8 +156,8 @@ class RelabelCFGBlocks(RewriteRule):
         model.preds = [self.relabel_mapping[pred] for pred in model.preds]
         model.succs = [self.relabel_mapping[succ] for succ in model.succs]
         model.edge_labels = {
-            self.relabel_mapping[succ]: label
-            for succ, label in model.edge_labels.items()
+            label: self.relabel_mapping[succ]
+            for label, succ in model.edge_labels.items()
         }
 
         return model
@@ -174,13 +185,22 @@ class CFGtoDot(RewriteRule):
 
     def map_CFGBlock(self, model):
 
-        if model.edge_labels:
-            label = [f"Condition: {self(model.stmts[0])}"]
-        else:
-            label = [self(stmt) for stmt in model.stmts]
+        label = [self(stmt) for stmt in model.stmts]
 
         if len(label) > self.max_lines and self.max_lines >= 0:
             label = label[: self.max_lines] + ["..."]
+
+        if model.edge_labels:
+            if len(label) < self.max_lines:
+                label[-1] = f"Condition: {label[-1]}"
+            else:
+                label += [f"Condition: {self(model.stmts[-1])}"]
+
+        if model.tags:
+            label = label + [
+                f"{' tags ':-^24}",
+                *[f"{k}: {v}" for k, v in model.tags.items()],
+            ]
 
         self.dot.node(
             str(model.register_id),
@@ -188,8 +208,12 @@ class CFGtoDot(RewriteRule):
             + "\n".join(label),
         )
 
-        for succ in model.succs:
-            self.dot.edge(str(model.register_id), str(succ))
+        if model.edge_labels:
+            for label, succ in model.edge_labels.items():
+                self.dot.edge(str(model.register_id), str(succ), label=label)
+        else:
+            for succ in model.succs:
+                self.dot.edge(str(model.register_id), str(succ))
 
     def generic_map(self, model):
         return f"{self.serialize(model)}"

@@ -53,7 +53,10 @@ class TypeReflectBaseModel(VisitableBaseModel):
 ########################################################################################
 
 NodeLabelType = TypeVar("NodeLabelType")
+"""TypeVar for node label of graph protocol"""
+
 NodeType = TypeVar("NodeType")
+"""TypeVar for node of graph protocol"""
 
 
 class GraphProtocol(MutableMapping[NodeLabelType, NodeType]):
